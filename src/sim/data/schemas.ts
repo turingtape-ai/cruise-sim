@@ -89,6 +89,8 @@ export const ModuleSchema = z.object({
   hullEnd: z.enum(['forward', 'aft']).optional(),
   /** Cabins only: window class. Drives hull-window placement rules. */
   view: z.enum(['inside', 'oceanview', 'balcony']).optional(),
+  /** Passenger need this venue replenishes (Phase 3). Cabins implicitly serve rest. */
+  servesNeed: z.enum(['food', 'fun', 'rest']).optional(),
   appealTags: z.array(z.string().min(1)),
 });
 
@@ -101,6 +103,23 @@ export type Restaurant = z.infer<typeof RestaurantSchema>;
 export type Bar = z.infer<typeof BarSchema>;
 export type Dining = z.infer<typeof DiningFileSchema>;
 export type Excursion = z.infer<typeof ExcursionSchema>;
+export const CrewRoleSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  /** Need this role's service quality applies to; null = structural role. */
+  serves: z.enum(['food', 'fun', 'rest', 'novelty']).nullable(),
+  /** Base wage before the skill multiplier (GAME_RULES §4.2b). */
+  wagePerDay: z.number().positive(),
+});
+
+export const CrewFileSchema = z.object({
+  roles: z.array(CrewRoleSchema).min(1),
+  firstNames: z.array(z.string().min(1)).min(10),
+  lastNames: z.array(z.string().min(1)).min(10),
+});
+
 export type ModuleCategory = z.infer<typeof ModuleCategorySchema>;
 export type ShipModule = z.infer<typeof ModuleSchema>;
 export type DeckZone = z.infer<typeof DeckZoneSchema>;
+export type CrewRole = z.infer<typeof CrewRoleSchema>;
+export type CrewData = z.infer<typeof CrewFileSchema>;

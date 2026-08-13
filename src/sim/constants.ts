@@ -120,3 +120,46 @@ export const ARCHETYPE_NEED_WEIGHTS: Record<Archetype, Record<NeedKind, number>>
 export const CREW_MORALE_DECAY_PER_SAILING_DAY = 1.5;
 export const PRICE_ELASTICITY = -1.4;
 export const REPUTATION_SMOOTHING = 0.2;
+
+// ---- Phase 3 (live): crew, passengers, needs. GAME_RULES §4.2/§4.2b. ----
+
+/** Base need replenishment per tick at full coverage and quality 1.0. */
+export const NEED_REGEN_PER_TICK: Record<Exclude<NeedKind, 'novelty'>, number> = {
+  food: 9,
+  fun: 7,
+  rest: 12,
+};
+/** Needs start here when a cohort boards. */
+export const NEED_START = 80;
+/** Novelty jump when the ship arrives at a port this cruise hasn't seen. */
+export const NOVELTY_PORT_BOOST = 35;
+/** Rest replenishes only during night hours [start, end) — wraps midnight. */
+export const NIGHT_HOURS = { start: 22, end: 6 };
+/** Service quality when no crew member covers a need ("self service"). */
+export const SELF_SERVICE_QUALITY = 0.15;
+/** Crew morale recovery per full Port Day (counterpart to the sailing decay). */
+export const CREW_MORALE_RECOVERY_PER_PORT_DAY = 3;
+/** Wage multiplier: wage = role base × (0.7 + skill × 0.15). */
+export const WAGE_SKILL_FACTOR = { base: 0.7, perSkill: 0.15 };
+/** Fuel saving from the best engineer aboard: 3% per skill point (max 15%). */
+export const ENGINEER_FUEL_SAVING_PER_SKILL = 0.03;
+/** Rotating hiring pool: candidates per week (1 week = 168 ticks). */
+export const CANDIDATES_PER_WEEK = 6;
+export const TICKS_PER_WEEK = 168;
+/** New crew join at this morale. */
+export const CREW_STARTING_MORALE = 85;
+
+/** Cohort archetype mix (fractions of guests, largest-remainder rounded). */
+export const ARCHETYPE_MIX: Record<Archetype, number> = {
+  families: 0.3,
+  retirees: 0.2,
+  'party-groups': 0.2,
+  'luxury-seekers': 0.15,
+  adventurers: 0.15,
+};
+
+/**
+ * Flat fare per guest per cruise night, collected at boarding.
+ * PLACEHOLDER until Phase 5 replaces it with demand & price elasticity (§4.4).
+ */
+export const FARE_PER_NIGHT = 180;

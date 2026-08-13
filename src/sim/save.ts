@@ -3,6 +3,7 @@
 
 import type { GameState, PlacedModule } from './types';
 import { starterLayout, V2_STARTER_MODULE_COUNTS } from './ship';
+import { starterCrew } from './state';
 import { loadGameData, type GameData } from './data/load';
 import type { ShipClass } from './constants';
 
@@ -18,10 +19,11 @@ export function deserialize(raw: string): GameState | null {
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== 'object' || parsed === null) return null;
     const v = (parsed as { version?: unknown }).version;
-    // v1 predates layouts entirely; granting the (v3) starter makes it a v3 save.
-    if (v === 1) return grantStarterLayout(parsed as Record<string, unknown>);
-    if (v === 2) return migrateV2toV3(parsed as Record<string, unknown>);
-    if (v !== 3) return null; // future versions: migrate here
+    // Migrations chain: v1 → (starter layout) → v3 shape → v4.
+    if (v === 1) return migrateV3toV4(grantStarterLayout(parsed as Record<string, unknown>));
+    if (v === 2) return migrateV3toV4(migrateV2toV3(parsed as Record<string, unknown>));
+    if (v === 3) return migrateV3toV4(parsed as unknown as GameState);
+    if (v !== 4) return null; // future versions: migrate here
     return parsed as GameState;
   } catch {
     return null;
@@ -45,6 +47,21 @@ function grantStarterLayout(old: Record<string, unknown>): GameState {
     version: 3,
     ship: { ...ship, layout: starterLayout(shipClassOf(ship)) },
   } as GameState;
+}
+
+/** v3 predates crew & passengers: grant the starter crew and empty cruise state. */
+function migrateV3toV4(old: GameState): GameState {
+  const o = old as unknown as Record<string, unknown>;
+  return {
+    ...old,
+    version: 4,
+    rngSeed: (o.rngSeed as number) ?? 1,
+    crew: starterCrew(),
+    crewNextId: 5,
+    hiredCandidates: { week: 0, indices: [] },
+    cruise: null,
+    lastCruiseStars: null,
+  };
 }
 
 /**
