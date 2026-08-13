@@ -31,6 +31,13 @@ export interface ShipPanel {
 
 const fmt = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 
+const ZONE_HINTS: Record<string, string> = {
+  top: 'top decks',
+  cabins: 'mid decks',
+  venues: 'lower decks',
+  service: 'below decks',
+};
+
 export function initShipPanel(root: HTMLElement, store: GameStoreApi, data: GameData): ShipPanel {
   let selectedModuleId: string | null = null;
   let selectionCb: (id: string | null) => void = () => {};
@@ -55,6 +62,9 @@ export function initShipPanel(root: HTMLElement, store: GameStoreApi, data: Game
               <span class="pi-name">${m.name}</span>
               <span class="pi-meta">${m.w}×${m.h} · ${fmt(m.cost)} · ${fmt(m.upkeepPerDay)}/day${
                 m.capacity > 0 ? ` · ${m.capacity} pax` : ''
+              }</span>
+              <span class="pi-zone">${m.zones.map((z) => ZONE_HINTS[z] ?? z).join(' / ')}${
+                m.view === 'oceanview' || m.view === 'balcony' ? ' · hull side' : ''
               }</span>
             </button>`,
             )

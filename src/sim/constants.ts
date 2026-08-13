@@ -24,10 +24,47 @@ export const PORT_STAY_HOURS = 10;
 
 /** Deck-grid dimensions per ship class: stacked decks × cells along each deck. */
 export const SHIP_GRID: Record<ShipClass, { decks: number; cols: number }> = {
-  coastal: { decks: 5, cols: 24 },
-  panamax: { decks: 7, cols: 32 },
-  grande: { decks: 9, cols: 40 },
+  coastal: { decks: 6, cols: 24 },
+  panamax: { decks: 8, cols: 32 },
+  grande: { decks: 10, cols: 40 },
 };
+
+export type DeckZone = 'top' | 'cabins' | 'venues' | 'service';
+
+/**
+ * Vertical zoning per class, index 0 = TOP deck. Mirrors real deck plans:
+ * Lido/open decks on top, accommodation mid-ship, entertainment/dining on the
+ * lower passenger decks, crew and machinery below (GAME_RULES §4.1c).
+ */
+export const DECK_ZONES: Record<ShipClass, DeckZone[]> = {
+  coastal: ['top', 'cabins', 'cabins', 'venues', 'venues', 'service'],
+  panamax: ['top', 'top', 'cabins', 'cabins', 'cabins', 'venues', 'venues', 'service'],
+  grande: [
+    'top',
+    'top',
+    'cabins',
+    'cabins',
+    'cabins',
+    'cabins',
+    'venues',
+    'venues',
+    'service',
+    'service',
+  ],
+};
+
+/**
+ * Elevator core columns (forward / midship / aft banks) per class. Cores span
+ * every deck; no module may occupy these columns.
+ */
+export const ELEVATOR_COLS: Record<ShipClass, number[]> = {
+  coastal: [5, 12, 19],
+  panamax: [7, 16, 25],
+  grande: [9, 20, 31],
+};
+
+/** Fraction of the hull length counted as the bow ("forward") or stern ("aft") band. */
+export const HULL_END_FRACTION = 1 / 3;
 
 /** Fraction of a module's cost refunded when it is sold/removed. */
 export const MODULE_SELL_REFUND = 0.5;

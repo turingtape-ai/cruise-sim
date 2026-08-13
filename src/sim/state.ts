@@ -7,7 +7,7 @@ export const DEFAULT_SHIP_NAME = 'MV Pioneer';
 
 export function createNewGame(homePortId: string = DEFAULT_HOME_PORT_ID): GameState {
   return {
-    version: 2,
+    version: 3,
     tick: 0,
     speed: 0,
     money: STARTING_MONEY,

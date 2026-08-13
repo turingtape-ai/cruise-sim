@@ -2,6 +2,19 @@
 
 Unspecified calls made while building, newest first.
 
+- **Deck zoning abstracts real ship architecture** (researched against published cruise deck
+  plans — venues low, cabins mid, Lido high, bridge forward, engine aft, elevator banks
+  fore/mid/aft): implemented as per-deck zone bands + reserved elevator-core columns +
+  bow/stern bands, not as a freeform copy of any one ship. GameState bumped to v3; v2 saves
+  are refitted to the fresh starter and **player-bought rooms refunded at full cost** (the
+  rules changed, not the player's judgment).
+- **Side-view stand-in for inside vs. window cabins**: the cutaway can't show
+  port/starboard, so cells adjacent to an elevator core count as "interior" — oceanview and
+  balcony cabins are barred from them, and balconies must take the top cabin deck. Twin
+  corridor lines on cabin decks are visual until Phase 3 makes circulation functional.
+- **Grid grew to 6 decks (coastal)** so the venue band can host the 2-deck theater and the
+  service band stays distinct.
+
 - **Deck 0 is the TOP deck** in layout coordinates, matching how the cutaway reads visually.
   `placement: "top"` means deck 0; `"bottom"` means the module's lowest row touches the keel.
 - **The starter ship is free**: new games (and migrated v1 saves) begin with a commissioned

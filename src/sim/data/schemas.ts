@@ -62,6 +62,14 @@ export const ModuleCategorySchema = z.enum([
   'operations',
 ]);
 
+/**
+ * Vertical zone bands, top → bottom, mirroring real deck plans:
+ * `top` = Lido & open decks (pool, buffet, gym, bridge), `cabins` = mid
+ * accommodation decks, `venues` = lower entertainment/dining decks,
+ * `service` = crew & machinery below the passenger decks.
+ */
+export const DeckZoneSchema = z.enum(['top', 'cabins', 'venues', 'service']);
+
 export const ModuleSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -75,6 +83,12 @@ export const ModuleSchema = z.object({
   capacity: z.number().int().nonnegative(),
   /** Deck restriction: 'top' must touch the top deck, 'bottom' the keel. */
   placement: z.enum(['any', 'top', 'bottom']),
+  /** Zone bands every occupied deck must belong to. */
+  zones: z.array(DeckZoneSchema).min(1),
+  /** Bow/stern restriction: bridge sits forward, machinery aft. */
+  hullEnd: z.enum(['forward', 'aft']).optional(),
+  /** Cabins only: window class. Drives hull-window placement rules. */
+  view: z.enum(['inside', 'oceanview', 'balcony']).optional(),
   appealTags: z.array(z.string().min(1)),
 });
 
@@ -89,3 +103,4 @@ export type Dining = z.infer<typeof DiningFileSchema>;
 export type Excursion = z.infer<typeof ExcursionSchema>;
 export type ModuleCategory = z.infer<typeof ModuleCategorySchema>;
 export type ShipModule = z.infer<typeof ModuleSchema>;
+export type DeckZone = z.infer<typeof DeckZoneSchema>;

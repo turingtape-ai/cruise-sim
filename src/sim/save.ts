@@ -1,8 +1,10 @@
 // Versioned (de)serialization of GameState. Storage side effects live in the store,
 // not here — this module stays pure so it can be unit tested.
 
-import type { GameState } from './types';
-import { starterLayout } from './ship';
+import type { GameState, PlacedModule } from './types';
+import { starterLayout, V2_STARTER_MODULE_COUNTS } from './ship';
+import { loadGameData, type GameData } from './data/load';
+import type { ShipClass } from './constants';
 
 export const SAVE_KEY = 'harbor-horizon-save';
 
@@ -16,21 +18,65 @@ export function deserialize(raw: string): GameState | null {
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== 'object' || parsed === null) return null;
     const v = (parsed as { version?: unknown }).version;
-    if (v === 1) return migrateV1toV2(parsed as Record<string, unknown>);
-    if (v !== 2) return null; // future versions: migrate here
+    // v1 predates layouts entirely; granting the (v3) starter makes it a v3 save.
+    if (v === 1) return grantStarterLayout(parsed as Record<string, unknown>);
+    if (v === 2) return migrateV2toV3(parsed as Record<string, unknown>);
+    if (v !== 3) return null; // future versions: migrate here
     return parsed as GameState;
   } catch {
     return null;
   }
 }
 
-/** v1 saves predate the deck editor: grant them the commissioned starter layout. */
-function migrateV1toV2(v1: Record<string, unknown>): GameState {
-  const ship = v1.ship as Record<string, unknown>;
-  const shipClass = (ship.shipClass as 'coastal' | 'panamax' | 'grande') ?? 'coastal';
+let cachedData: GameData | null = null;
+function data(): GameData {
+  cachedData ??= loadGameData();
+  return cachedData;
+}
+
+function shipClassOf(ship: Record<string, unknown>): ShipClass {
+  return (ship.shipClass as ShipClass) ?? 'coastal';
+}
+
+function grantStarterLayout(old: Record<string, unknown>): GameState {
+  const ship = old.ship as Record<string, unknown>;
   return {
-    ...v1,
-    version: 2,
-    ship: { ...ship, layout: starterLayout(shipClass) },
+    ...old,
+    version: 3,
+    ship: { ...ship, layout: starterLayout(shipClassOf(ship)) },
   } as GameState;
+}
+
+/**
+ * v2 layouts predate deck zoning and elevator cores, so old placements can be
+ * illegal under the new rules. The ship is refitted to the fresh starter
+ * layout and every module the player bought beyond the v2 starter set is
+ * refunded at FULL cost — the rules changed, not the player's judgment.
+ */
+function migrateV2toV3(old: Record<string, unknown>): GameState {
+  const migrated = grantStarterLayout(old);
+  const oldPlaced =
+    ((old.ship as Record<string, unknown>).layout as { placed?: PlacedModule[] } | undefined)
+      ?.placed ?? [];
+
+  const remainingStarter = { ...V2_STARTER_MODULE_COUNTS };
+  let refund = 0;
+  for (const placed of oldPlaced) {
+    if ((remainingStarter[placed.moduleId] ?? 0) > 0) {
+      remainingStarter[placed.moduleId]! -= 1;
+      continue;
+    }
+    refund += data().modulesById.get(placed.moduleId)?.cost ?? 0;
+  }
+  if (refund > 0) {
+    migrated.money += refund;
+    migrated.log = [
+      ...migrated.log,
+      {
+        tick: migrated.tick,
+        message: `Refit to the new deck plan code — $${Math.round(refund).toLocaleString('en-US')} in rooms refunded.`,
+      },
+    ];
+  }
+  return migrated;
 }
