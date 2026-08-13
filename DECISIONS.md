@@ -2,6 +2,18 @@
 
 Unspecified calls made while building, newest first.
 
+- **Deck 0 is the TOP deck** in layout coordinates, matching how the cutaway reads visually.
+  `placement: "top"` means deck 0; `"bottom"` means the module's lowest row touches the keel.
+- **The starter ship is free**: new games (and migrated v1 saves) begin with a commissioned
+  layout (bridge, engine, crew quarters, buffet, bar, 4 cabins) at no cost — the brief's
+  "buy/outfit a ship" purchase flow belongs with the Phase 5 economy.
+- **Upkeep accrues continuously** (docked or sailing) rather than per Port Day — simpler, and
+  it makes over-building hurt immediately. Sell refund is 50%.
+- **Physical rooms vs. themes**: `modules.json` describes physical rooms; `dining.json`
+  venues become _assignable themes_ for restaurant/bar/buffet modules in Phase 4.
+- **No seaworthiness gate yet**: selling the engine doesn't stop the ship until Phase 3+
+  systems land; `layoutStats.hasEngine/hasBridge` exists for that hookup.
+
 - **Sea routing is computed, not shipped as data**: rather than vendoring a marine-network
   dataset (e.g. Eurostat SeaRoute/MARNET), routes come from A* over a 0.5° water grid derived
   from the world-atlas land polygons we already bundle. Zero new data files, deterministic,

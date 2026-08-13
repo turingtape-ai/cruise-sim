@@ -57,7 +57,12 @@ describe('advanceTicks', () => {
     const g = gameWithRoute(['miami', 'nassau']);
     const nm = seaRoute(portsById.get('miami')!, portsById.get('nassau')!).nm;
     const sailingTicks = Math.ceil(nm / SHIP_SPEED_KNOTS.coastal);
-    const { state, events } = advanceTicks(g, PORT_STAY_HOURS + sailingTicks, portsById, NO_MODULES);
+    const { state, events } = advanceTicks(
+      g,
+      PORT_STAY_HOURS + sailingTicks,
+      portsById,
+      NO_MODULES,
+    );
     expect(state.ship.position).toMatchObject({ kind: 'docked', portId: 'nassau' });
     expect(state.money).toBeCloseTo(STARTING_MONEY - nm * FUEL_COST_PER_NM.coastal, 6);
     expect(events.some((e) => e.type === 'ship:arrived')).toBe(true);
