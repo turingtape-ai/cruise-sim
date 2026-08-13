@@ -18,14 +18,30 @@ const REGION_LABELS: Record<string, string> = {
 export interface Hud {
   update(game: GameState): void;
   showHoverCard(portId: string | null, clientX: number, clientY: number): void;
+  /** Transient message (e.g. placement errors). */
+  toast(message: string): void;
+  setView(view: 'globe' | 'ship'): void;
+}
+
+export interface HudOptions {
+  onViewChange(view: 'globe' | 'ship'): void;
 }
 
 const fmtMoney = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 
-export function initHud(root: HTMLElement, store: GameStoreApi, data: GameData): Hud {
+export function initHud(
+  root: HTMLElement,
+  store: GameStoreApi,
+  data: GameData,
+  options: HudOptions,
+): Hud {
   root.innerHTML = `
     <header class="hud-top">
       <div class="brand">Harbor &amp; Horizon</div>
+      <nav class="view-tabs" role="tablist">
+        <button data-view="globe" class="active">🌍 Globe</button>
+        <button data-view="ship">🚢 Ship</button>
+      </nav>
       <div class="stat money" title="Treasury"></div>
       <div class="stat date"></div>
       <div class="speed-controls" role="group" aria-label="Time controls">
@@ -48,11 +64,13 @@ export function initHud(root: HTMLElement, store: GameStoreApi, data: GameData):
       <button class="clear-route" data-action="clear" hidden>Clear route</button>
       <p class="hint">Click ports on the globe to chain a round trip, then press 1×.</p>
     </aside>
+    <aside class="panel ship-panel"></aside>
     <aside class="panel log-panel">
       <h2>Ship’s log</h2>
       <ul class="log-list"></ul>
     </aside>
     <div class="hover-card" hidden></div>
+    <div class="toast" hidden></div>
   `;
 
   const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
@@ -71,7 +89,8 @@ export function initHud(root: HTMLElement, store: GameStoreApi, data: GameData):
     const btn = (e.target as HTMLElement).closest('button');
     if (!btn) return;
     const s = store.getState();
-    if (btn.dataset.speed !== undefined) s.setSpeed(Number(btn.dataset.speed) as SpeedSetting);
+    if (btn.dataset.view === 'globe' || btn.dataset.view === 'ship') setView(btn.dataset.view);
+    else if (btn.dataset.speed !== undefined) s.setSpeed(Number(btn.dataset.speed) as SpeedSetting);
     else if (btn.dataset.action === 'save') s.save();
     else if (btn.dataset.action === 'load') s.load();
     else if (btn.dataset.action === 'new') {
@@ -168,6 +187,24 @@ export function initHud(root: HTMLElement, store: GameStoreApi, data: GameData):
     root.querySelector('.log-panel')?.classList.add('collapsed');
   }
 
+  let toastTimer: ReturnType<typeof setTimeout> | undefined;
+  const toastEl = q('.toast');
+  function toast(message: string): void {
+    toastEl.textContent = message;
+    toastEl.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (toastEl.hidden = true), 2500);
+  }
+
+  function setView(view: 'globe' | 'ship'): void {
+    document.body.dataset.view = view;
+    for (const b of root.querySelectorAll<HTMLButtonElement>('[data-view]')) {
+      b.classList.toggle('active', b.dataset.view === view);
+    }
+    showHoverCard(null, 0, 0);
+    options.onViewChange(view);
+  }
+
   update(store.getState().game);
-  return { update, showHoverCard };
+  return { update, showHoverCard, toast, setView };
 }

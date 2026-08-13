@@ -22,6 +22,16 @@ export const FUEL_COST_PER_NM: Record<ShipClass, number> = {
 
 export const PORT_STAY_HOURS = 10;
 
+/** Deck-grid dimensions per ship class: stacked decks × cells along each deck. */
+export const SHIP_GRID: Record<ShipClass, { decks: number; cols: number }> = {
+  coastal: { decks: 5, cols: 24 },
+  panamax: { decks: 7, cols: 32 },
+  grande: { decks: 9, cols: 40 },
+};
+
+/** Fraction of a module's cost refunded when it is sold/removed. */
+export const MODULE_SELL_REFUND = 0.5;
+
 /** Indexed by port sizeTier (1-4). Charged at PORT_FEE_MULTIPLIER until Phase 5. */
 export const PORT_FEE_BY_TIER: Record<1 | 2 | 3 | 4, number> = {
   1: 500,

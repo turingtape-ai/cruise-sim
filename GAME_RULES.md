@@ -53,6 +53,8 @@ Single source of truth for tunables. Mirror of `src/sim/constants.ts` — keep i
 | `PORT_STAY_HOURS`                   | 10                       | sim hours                 | Default dock time per Port call.                                                                                                |
 | `PORT_FEE_BY_TIER`                  | 500 / 1200 / 2500 / 5000 | $                         | Indexed by port size tier 1–4. Charged on arrival. _(Phase 5 — documented now, charged from Phase 1 at 0×; see Open Questions)_ |
 | `STARTING_MONEY`                    | 500000                   | $                         | New game bankroll.                                                                                                              |
+| `SHIP_GRID.coastal`                 | 5 decks × 24 cols        | cells                     | Deck-editor grid per class; panamax 7×32, grande 9×40 _(locked)_.                                                               |
+| `MODULE_SELL_REFUND`                | 0.5                      | —                         | Fraction of module cost refunded on sale.                                                                                       |
 | `SEA_GRID_DEG`                      | 0.5                      | degrees                   | Ocean-grid resolution for sea routing (§4.1).                                                                                   |
 | `SEA_SNAP_MAX_CELLS`                | 4                        | cells                     | Max distance a coastal port snaps to open water.                                                                                |
 | `SEA_LOS_SAMPLE_NM`                 | 8                        | nm                        | Water-check sampling when smoothing routes; below narrowest cell width.                                                         |
@@ -90,6 +92,19 @@ cell (Øresund, Gibraltar, Dover, Juan de Fuca, the Inside Passage approaches) a
 corridors, as in real marine routing networks. Within 60 nm of a port the path is below grid
 resolution (harbor approach) and may visually hug the coast. Point distances use the haversine
 formula with Earth radius 3440.065 nm.
+
+### 4.1b Module upkeep (Phase 2 — live)
+
+Each placed Module accrues upkeep continuously, docked or sailing:
+
+```
+upkeepPerTick = Σ_over_placed_modules( upkeepPerDay ) / 24
+```
+
+Buying a module charges its full `cost` immediately; selling refunds
+`cost × MODULE_SELL_REFUND`. Placement rules: modules must fit the `SHIP_GRID` for the ship's
+class, may not overlap, and `placement: "top"` modules (pool, bridge) must sit on the top deck
+while `"bottom"` modules (engine) must touch the keel.
 
 ### 4.2 Satisfaction score (Phase 3/5 — designed)
 
@@ -168,11 +183,25 @@ Each entry: `id` (unique), `name`, plus:
 | `capacity`      | number          | Max guests per Port Day.                         |
 | `appealTags`    | string[]        | Matched against archetype preferences (Phase 3). |
 
+### 5.4 `data/modules.json` — array of Module
+
+| Field          | Type                                                                           | Meaning                                                     |
+| -------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `id`           | string (unique)                                                                | Referenced by `ShipLayout.placed`.                          |
+| `name`         | string                                                                         | Display name.                                               |
+| `category`     | `cabin \| dining \| entertainment \| wellness \| family \| crew \| operations` | Drives editor grouping, tile color, and stats aggregation.  |
+| `w`, `h`       | int (cells)                                                                    | Footprint: `w` along the deck, `h` in stacked decks (1–2).  |
+| `cost`         | number ($)                                                                     | One-time purchase price.                                    |
+| `upkeepPerDay` | number ($/day)                                                                 | Continuous drain, §4.1b.                                    |
+| `capacity`     | int                                                                            | Guests served (cabins → passenger capacity; crew → berths). |
+| `placement`    | `any \| top \| bottom`                                                         | Deck restriction.                                           |
+| `appealTags`   | string[]                                                                       | Matched against archetype preferences (Phase 3).            |
+
 ## 6. Phase checklist
 
 - [x] **Phase 0 — Foundations**: scaffold (Vite/TS/Pixi/Three, ESLint/Prettier, Vitest, Pages CI); GAME_RULES.md + ARCHITECTURE.md; GameState + tick clock + save/load; `/data` JSON files with zod validation.
 - [x] **Phase 1 — Globe & routes**: interactive globe (spin/zoom/pins/hover cards); route planner with arcs and distance/day estimates; ship dot sailing the route with arrival/departure log; HUD (money, date, speed, route).
-- [ ] **Phase 2 — Ship builder**: grid deck editor, room modules (Pixi).
+- [x] **Phase 2 — Ship builder**: grid deck editor, room modules (Pixi).
 - [ ] **Phase 3 — Crew & passengers**: hiring, morale, archetypes, needs sim.
 - [ ] **Phase 4 — Dining, excursions, events**: menus, bookings, event scheduler.
 - [ ] **Phase 5 — Economy & reputation**: full revenue/cost model, demand, star gates.

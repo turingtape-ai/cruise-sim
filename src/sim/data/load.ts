@@ -1,8 +1,14 @@
 import portsJson from '../../../data/ports.json';
 import diningJson from '../../../data/dining.json';
 import excursionsJson from '../../../data/excursions.json';
-import { PortsFileSchema, DiningFileSchema, ExcursionsFileSchema } from './schemas';
-import type { Port, Dining, Excursion } from './schemas';
+import modulesJson from '../../../data/modules.json';
+import {
+  PortsFileSchema,
+  DiningFileSchema,
+  ExcursionsFileSchema,
+  ModulesFileSchema,
+} from './schemas';
+import type { Port, Dining, Excursion, ShipModule } from './schemas';
 
 export interface GameData {
   ports: Port[];
@@ -10,6 +16,8 @@ export interface GameData {
   dining: Dining;
   excursions: Excursion[];
   excursionsByPortId: Map<string, Excursion[]>;
+  modules: ShipModule[];
+  modulesById: Map<string, ShipModule>;
 }
 
 /**
@@ -20,6 +28,7 @@ export function loadGameData(): GameData {
   const ports = PortsFileSchema.parse(portsJson);
   const dining = DiningFileSchema.parse(diningJson);
   const excursions = ExcursionsFileSchema.parse(excursionsJson);
+  const modules = ModulesFileSchema.parse(modulesJson);
 
   const portsById = new Map(ports.map((p) => [p.id, p]));
   if (portsById.size !== ports.length) throw new Error('ports.json: duplicate port ids');
@@ -45,5 +54,8 @@ export function loadGameData(): GameData {
   if (new Set(diningIds).size !== diningIds.length)
     throw new Error('dining.json: duplicate venue ids');
 
-  return { ports, portsById, dining, excursions, excursionsByPortId };
+  const modulesById = new Map(modules.map((m) => [m.id, m]));
+  if (modulesById.size !== modules.length) throw new Error('modules.json: duplicate module ids');
+
+  return { ports, portsById, dining, excursions, excursionsByPortId, modules, modulesById };
 }

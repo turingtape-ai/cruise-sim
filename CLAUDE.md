@@ -24,8 +24,10 @@ number and formula lives there.
 
 ## Current phase
 
-**Phases 0 and 1 are complete** (foundations; globe + routes + sailing ship dot + HUD).
-Next up: **Phase 2 — ship builder** (grid deck editor with room modules, in Pixi).
+**Phases 0–2 are complete** (foundations; globe + sea routes + HUD; Pixi deck editor with
+module placement, upkeep, and GameState v2 saves). Post-Phase-1 additions: water-grid A* sea
+routing, mobile/touch pass. Next up: **Phase 3 — crew + passengers + needs sim** (the formulas
+and constants are already designed in `GAME_RULES.md` §3–4).
 See the phase checklist in `GAME_RULES.md` §6.
 
 ## Commands

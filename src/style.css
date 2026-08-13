@@ -38,7 +38,8 @@ body {
   height: 100vh;
 }
 
-#globe {
+#globe,
+#ship {
   position: absolute;
   inset: 0;
 }
@@ -46,6 +47,22 @@ body {
 #globe canvas {
   display: block;
   cursor: grab;
+}
+
+#ship canvas {
+  display: block;
+}
+
+/* View switching: exactly one scene (and its side panel) is visible. */
+body[data-view='globe'] #ship,
+body[data-view='globe'] .ship-panel {
+  display: none;
+}
+
+body[data-view='ship'] #globe,
+body[data-view='ship'] .route-panel,
+body[data-view='ship'] .hover-card {
+  display: none;
 }
 
 #hud {
@@ -92,6 +109,26 @@ body {
 .stat.money {
   color: var(--coral);
   font-size: 1.05rem;
+}
+
+.view-tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(245, 233, 212, 0.07);
+  border-radius: 12px;
+  padding: 3px;
+}
+
+.view-tabs button {
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  padding: 5px 12px;
+}
+
+.view-tabs button.active {
+  background: var(--seafoam);
+  color: var(--navy);
 }
 
 .speed-controls {
@@ -277,6 +314,133 @@ button:active {
   overflow-y: auto;
 }
 
+/* ---- Ship builder panel ---- */
+
+.ship-panel {
+  top: 84px;
+  right: 12px;
+  width: 286px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.ship-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.build-hint {
+  font-size: 0.78rem;
+  color: var(--seafoam);
+  min-height: 0;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.palette h3 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cream-dim);
+  margin: 10px 0 5px;
+}
+
+.palette-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.palette-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  text-align: left;
+  padding: 6px 10px;
+  width: 100%;
+}
+
+.palette-item .pi-name {
+  font-size: 0.85rem;
+}
+
+.palette-item .pi-meta {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--cream-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.palette-item.selected {
+  background: var(--seafoam);
+  border-color: var(--seafoam);
+}
+
+.palette-item.selected .pi-name,
+.palette-item.selected .pi-meta {
+  color: var(--navy);
+}
+
+.palette-item.unaffordable {
+  opacity: 0.45;
+}
+
+.sell-bar[hidden] {
+  display: none;
+}
+
+.sell-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: rgba(255, 127, 102, 0.12);
+  border: 1px solid rgba(255, 127, 102, 0.4);
+  border-radius: 10px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+
+.sell-bar button {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+}
+
+.sell-bar button[data-sell] {
+  background: var(--coral);
+  border-color: var(--coral);
+  color: var(--navy);
+}
+
+.ghost-btn {
+  background: transparent;
+}
+
+/* ---- Toast ---- */
+
+.toast {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--coral);
+  color: var(--navy);
+  font-weight: 800;
+  font-size: 0.85rem;
+  border-radius: 10px;
+  padding: 8px 16px;
+  z-index: 20;
+  pointer-events: none;
+}
+
 .log-list {
   list-style: none;
   padding: 0;
@@ -396,6 +560,20 @@ button:active {
     width: min(56vw, 300px);
     max-height: 36vh;
     padding: 10px 12px;
+  }
+
+  .ship-panel {
+    top: auto;
+    bottom: 8px;
+    right: 8px;
+    width: min(72vw, 270px);
+    max-height: 46vh;
+    padding: 10px 12px;
+  }
+
+  .toast {
+    top: auto;
+    bottom: 52vh;
   }
 
   .hover-card {
