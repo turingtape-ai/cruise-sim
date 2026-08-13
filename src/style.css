@@ -101,6 +101,7 @@ body {
 }
 
 button {
+  touch-action: manipulation;
   font: inherit;
   font-weight: 700;
   color: var(--cream);
@@ -156,6 +157,30 @@ button:active {
   letter-spacing: 0.12em;
   color: var(--seafoam);
   margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.panel h2::after {
+  content: ' ▾';
+  opacity: 0.6;
+}
+
+.panel.collapsed h2::after {
+  content: ' ▸';
+}
+
+.panel.collapsed h2 {
+  margin-bottom: 0;
+}
+
+.panel.collapsed > *:not(h2) {
+  display: none;
+}
+
+.panel.collapsed {
+  width: auto;
+  max-height: none;
 }
 
 .route-panel {
@@ -314,6 +339,69 @@ button:active {
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--coral);
+}
+
+.hover-card.docked {
+  top: auto;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  width: auto;
+  transform: none;
+}
+
+/* ---- Small screens ---- */
+
+@media (max-width: 720px) {
+  .hud-top {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding: 8px 12px;
+  }
+
+  .brand {
+    font-size: 0.9rem;
+  }
+
+  .stat,
+  .stat.money {
+    font-size: 0.85rem;
+  }
+
+  .speed-controls {
+    margin-left: 0;
+  }
+
+  .speed-controls button,
+  .sys-controls button {
+    padding: 5px 9px;
+    font-size: 0.8rem;
+  }
+
+  .route-panel {
+    top: auto;
+    bottom: 8px;
+    right: 8px;
+    width: min(62vw, 250px);
+    max-height: 44vh;
+    padding: 10px 12px;
+  }
+
+  .log-panel {
+    left: 8px;
+    bottom: 8px;
+    width: min(56vw, 300px);
+    max-height: 36vh;
+    padding: 10px 12px;
+  }
+
+  .hover-card {
+    max-height: 46vh;
+    overflow-y: auto;
+  }
 }
 
 /* ---- Error overlay ---- */

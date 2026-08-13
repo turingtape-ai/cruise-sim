@@ -130,6 +130,8 @@ export function initHud(root: HTMLElement, store: GameStoreApi, data: GameData):
       .join('');
   }
 
+  const coarsePointer = window.matchMedia('(pointer: coarse)');
+
   function showHoverCard(portId: string | null, clientX: number, clientY: number): void {
     if (!portId) {
       hoverCard.hidden = true;
@@ -137,18 +139,33 @@ export function initHud(root: HTMLElement, store: GameStoreApi, data: GameData):
     }
     const port = data.portsById.get(portId);
     if (!port) return;
+    const cta = coarsePointer.matches ? 'Tap again to add to route' : 'Click to add to route';
     hoverCard.innerHTML = `
       <h3>${port.name}</h3>
       <p class="meta">${port.country} · ${REGION_LABELS[port.region] ?? port.region} · ${'⚓'.repeat(port.sizeTier)}</p>
       <ul>${port.attractions.map((a) => `<li>${a.name} <span class="kind">${a.kind}</span></li>`).join('')}</ul>
-      <p class="cta">Click to add to route</p>
+      <p class="cta">${cta}</p>
     `;
     hoverCard.hidden = false;
+    // Touch: dock the card (CSS); mouse: follow the cursor.
+    hoverCard.classList.toggle('docked', coarsePointer.matches);
+    if (coarsePointer.matches) {
+      hoverCard.style.transform = '';
+      return;
+    }
     const pad = 14;
     const rect = hoverCard.getBoundingClientRect();
     const x = Math.min(clientX + pad, window.innerWidth - rect.width - pad);
     const y = Math.min(clientY + pad, window.innerHeight - rect.height - pad);
     hoverCard.style.transform = `translate(${x}px, ${y}px)`;
+  }
+
+  // Panels collapse via their headers; the log starts collapsed on phones.
+  for (const panel of root.querySelectorAll<HTMLElement>('.panel')) {
+    panel.querySelector('h2')?.addEventListener('click', () => panel.classList.toggle('collapsed'));
+  }
+  if (window.matchMedia('(max-width: 720px)').matches) {
+    root.querySelector('.log-panel')?.classList.add('collapsed');
   }
 
   update(store.getState().game);
