@@ -52,6 +52,34 @@ export const ExcursionSchema = z.object({
 
 export const ExcursionsFileSchema = z.array(ExcursionSchema);
 
+export const ModuleCategorySchema = z.enum([
+  'cabin',
+  'dining',
+  'entertainment',
+  'wellness',
+  'family',
+  'crew',
+  'operations',
+]);
+
+export const ModuleSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  category: ModuleCategorySchema,
+  /** Footprint in deck-grid cells: w along the deck, h in stacked decks. */
+  w: z.number().int().min(1).max(6),
+  h: z.number().int().min(1).max(2),
+  cost: z.number().nonnegative(),
+  upkeepPerDay: z.number().nonnegative(),
+  /** Guests served (or crew housed); 0 for pure operations rooms. */
+  capacity: z.number().int().nonnegative(),
+  /** Deck restriction: 'top' must touch the top deck, 'bottom' the keel. */
+  placement: z.enum(['any', 'top', 'bottom']),
+  appealTags: z.array(z.string().min(1)),
+});
+
+export const ModulesFileSchema = z.array(ModuleSchema);
+
 export type Port = z.infer<typeof PortSchema>;
 export type Attraction = z.infer<typeof AttractionSchema>;
 export type Buffet = z.infer<typeof BuffetSchema>;
@@ -59,3 +87,5 @@ export type Restaurant = z.infer<typeof RestaurantSchema>;
 export type Bar = z.infer<typeof BarSchema>;
 export type Dining = z.infer<typeof DiningFileSchema>;
 export type Excursion = z.infer<typeof ExcursionSchema>;
+export type ModuleCategory = z.infer<typeof ModuleCategorySchema>;
+export type ShipModule = z.infer<typeof ModuleSchema>;

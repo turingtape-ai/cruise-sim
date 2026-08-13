@@ -2,7 +2,8 @@
 // Pure — no renderer, no DOM, no randomness. (state, ports) in → (state, events) out.
 
 import type { GameState, LogEntry } from './types';
-import type { Port } from './data/schemas';
+import type { Port, ShipModule } from './data/schemas';
+import { layoutStats } from './ship';
 import type { SimEvent } from './events';
 import {
   SHIP_SPEED_KNOTS,
@@ -32,15 +33,23 @@ export function advanceTicks(
   state: GameState,
   ticks: number,
   portsById: Map<string, Port>,
+  modulesById: Map<string, ShipModule>,
 ): TickResult {
   const s: GameState = structuredClone(state);
   const events: SimEvent[] = [];
-  for (let i = 0; i < ticks; i++) stepOneTick(s, portsById, events);
+  const upkeepPerTick = layoutStats(s.ship.layout, modulesById).upkeepPerDay / 24;
+  for (let i = 0; i < ticks; i++) stepOneTick(s, portsById, upkeepPerTick, events);
   return { state: s, events };
 }
 
-function stepOneTick(s: GameState, portsById: Map<string, Port>, events: SimEvent[]): void {
+function stepOneTick(
+  s: GameState,
+  portsById: Map<string, Port>,
+  upkeepPerTick: number,
+  events: SimEvent[],
+): void {
   s.tick += 1;
+  s.money -= upkeepPerTick; // module upkeep accrues docked or sailing
   const pos = s.ship.position;
 
   if (pos.kind === 'docked') {

@@ -2,6 +2,7 @@
 // not here — this module stays pure so it can be unit tested.
 
 import type { GameState } from './types';
+import { starterLayout } from './ship';
 
 export const SAVE_KEY = 'harbor-horizon-save';
 
@@ -15,9 +16,21 @@ export function deserialize(raw: string): GameState | null {
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== 'object' || parsed === null) return null;
     const v = (parsed as { version?: unknown }).version;
-    if (v !== 1) return null; // future versions: migrate here
+    if (v === 1) return migrateV1toV2(parsed as Record<string, unknown>);
+    if (v !== 2) return null; // future versions: migrate here
     return parsed as GameState;
   } catch {
     return null;
   }
+}
+
+/** v1 saves predate the deck editor: grant them the commissioned starter layout. */
+function migrateV1toV2(v1: Record<string, unknown>): GameState {
+  const ship = v1.ship as Record<string, unknown>;
+  const shipClass = (ship.shipClass as 'coastal' | 'panamax' | 'grande') ?? 'coastal';
+  return {
+    ...v1,
+    version: 2,
+    ship: { ...ship, layout: starterLayout(shipClass) },
+  } as GameState;
 }

@@ -7,6 +7,8 @@ import { FUEL_COST_PER_NM, PORT_STAY_HOURS, SHIP_SPEED_KNOTS, STARTING_MONEY } f
 import type { GameState } from './types';
 
 const { portsById } = loadGameData();
+// Fuel-math tests run with zero upkeep; upkeep has its own test in ship.test.ts.
+const NO_MODULES = new Map<string, never>();
 
 function gameWithRoute(portIds: string[]): GameState {
   const g = createNewGame(portIds[0]);
@@ -18,13 +20,13 @@ describe('advanceTicks', () => {
   it('does not mutate the input state', () => {
     const g = gameWithRoute(['miami', 'nassau']);
     const frozen = JSON.stringify(g);
-    advanceTicks(g, 50, portsById);
+    advanceTicks(g, 50, portsById, NO_MODULES);
     expect(JSON.stringify(g)).toBe(frozen);
   });
 
   it('idles when there is no route', () => {
     const g = createNewGame();
-    const { state, events } = advanceTicks(g, 24, portsById);
+    const { state, events } = advanceTicks(g, 24, portsById, NO_MODULES);
     expect(state.tick).toBe(24);
     expect(state.ship.position).toMatchObject({ kind: 'docked', portId: 'miami' });
     expect(state.money).toBe(STARTING_MONEY);
@@ -33,9 +35,9 @@ describe('advanceTicks', () => {
 
   it('departs after a full port stay once a route is active', () => {
     const g = gameWithRoute(['miami', 'nassau']);
-    const before = advanceTicks(g, PORT_STAY_HOURS - 1, portsById);
+    const before = advanceTicks(g, PORT_STAY_HOURS - 1, portsById, NO_MODULES);
     expect(before.state.ship.position.kind).toBe('docked');
-    const after = advanceTicks(g, PORT_STAY_HOURS, portsById);
+    const after = advanceTicks(g, PORT_STAY_HOURS, portsById, NO_MODULES);
     expect(after.state.ship.position.kind).toBe('sailing');
     expect(after.events[0]).toMatchObject({
       type: 'ship:departed',
@@ -46,7 +48,7 @@ describe('advanceTicks', () => {
   it('burns fuel per nm actually sailed', () => {
     const g = gameWithRoute(['miami', 'nassau']);
     const speed = SHIP_SPEED_KNOTS.coastal;
-    const { state } = advanceTicks(g, PORT_STAY_HOURS + 3, portsById);
+    const { state } = advanceTicks(g, PORT_STAY_HOURS + 3, portsById, NO_MODULES);
     expect(state.ship.position).toMatchObject({ kind: 'sailing', nmDone: speed * 3 });
     expect(state.money).toBeCloseTo(STARTING_MONEY - speed * 3 * FUEL_COST_PER_NM.coastal, 6);
   });
@@ -55,7 +57,7 @@ describe('advanceTicks', () => {
     const g = gameWithRoute(['miami', 'nassau']);
     const nm = seaRoute(portsById.get('miami')!, portsById.get('nassau')!).nm;
     const sailingTicks = Math.ceil(nm / SHIP_SPEED_KNOTS.coastal);
-    const { state, events } = advanceTicks(g, PORT_STAY_HOURS + sailingTicks, portsById);
+    const { state, events } = advanceTicks(g, PORT_STAY_HOURS + sailingTicks, portsById, NO_MODULES);
     expect(state.ship.position).toMatchObject({ kind: 'docked', portId: 'nassau' });
     expect(state.money).toBeCloseTo(STARTING_MONEY - nm * FUEL_COST_PER_NM.coastal, 6);
     expect(events.some((e) => e.type === 'ship:arrived')).toBe(true);
@@ -64,7 +66,7 @@ describe('advanceTicks', () => {
   it('loops the route round-trip indefinitely', () => {
     const g = gameWithRoute(['miami', 'nassau']);
     // Two legs (~160 nm each ≈ 9 ticks) + stays; 100 ticks is over two full loops.
-    const { state, events } = advanceTicks(g, 100, portsById);
+    const { state, events } = advanceTicks(g, 100, portsById, NO_MODULES);
     const arrivals = events.filter((e) => e.type === 'ship:arrived').map((e) => e.payload.portId);
     expect(arrivals.length).toBeGreaterThanOrEqual(3);
     expect(arrivals).toContain('miami');
@@ -74,18 +76,18 @@ describe('advanceTicks', () => {
 
   it('stays docked and clears departure when the route is emptied', () => {
     const g = gameWithRoute(['miami', 'nassau']);
-    const sailing = advanceTicks(g, PORT_STAY_HOURS, portsById).state;
+    const sailing = advanceTicks(g, PORT_STAY_HOURS, portsById, NO_MODULES).state;
     expect(sailing.ship.position.kind).toBe('sailing');
-    const arrivedThenCleared = advanceTicks(sailing, 20, portsById).state;
+    const arrivedThenCleared = advanceTicks(sailing, 20, portsById, NO_MODULES).state;
     arrivedThenCleared.routePortIds = [];
-    const { state } = advanceTicks(arrivedThenCleared, 48, portsById);
+    const { state } = advanceTicks(arrivedThenCleared, 48, portsById, NO_MODULES);
     expect(state.ship.position.kind).toBe('docked');
     expect((state.ship.position as { departAtTick: number | null }).departAtTick).toBeNull();
   });
 
   it('keeps the log capped', () => {
     const g = gameWithRoute(['miami', 'nassau', 'cozumel', 'george-town']);
-    const { state } = advanceTicks(g, 5000, portsById);
+    const { state } = advanceTicks(g, 5000, portsById, NO_MODULES);
     expect(state.log.length).toBeLessThanOrEqual(100);
   });
 });

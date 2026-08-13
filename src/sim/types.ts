@@ -22,15 +22,33 @@ export type ShipPosition =
       nmTotal: number;
     };
 
+export interface PlacedModule {
+  /** Unique instance id within this layout. */
+  id: number;
+  moduleId: string;
+  /** Deck row the module's top edge sits on; deck 0 is the TOP deck. */
+  deck: number;
+  /** Leftmost grid cell along the deck (0 = bow side). */
+  x: number;
+}
+
+export interface ShipLayout {
+  decks: number;
+  cols: number;
+  nextId: number;
+  placed: PlacedModule[];
+}
+
 export interface ShipState {
   name: string;
   shipClass: ShipClass;
   position: ShipPosition;
+  layout: ShipLayout;
 }
 
 /** The one serializable object that fully describes a game in progress. */
 export interface GameState {
-  version: 1;
+  version: 2;
   /** Sim hours elapsed since EPOCH_ISO. */
   tick: number;
   speed: SpeedSetting;
