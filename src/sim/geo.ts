@@ -42,11 +42,7 @@ export function greatCirclePoint(a: LatLon, b: LatLon, t: number): LatLon {
   const s = Math.sin(omega);
   const k0 = Math.sin((1 - t) * omega) / s;
   const k1 = Math.sin(t * omega) / s;
-  return toLatLon([
-    k0 * va[0] + k1 * vb[0],
-    k0 * va[1] + k1 * vb[1],
-    k0 * va[2] + k1 * vb[2],
-  ]);
+  return toLatLon([k0 * va[0] + k1 * vb[0], k0 * va[1] + k1 * vb[1], k0 * va[2] + k1 * vb[2]]);
 }
 
 /** n+1 points sampling the great circle from a to b (inclusive of both ends). */

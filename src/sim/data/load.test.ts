@@ -10,9 +10,7 @@ describe('static game data', () => {
 
   it('covers all four regions', () => {
     const regions = new Set(data.ports.map((p) => p.region));
-    expect(regions).toEqual(
-      new Set(['caribbean', 'mediterranean', 'alaska', 'northern-europe']),
-    );
+    expect(regions).toEqual(new Set(['caribbean', 'mediterranean', 'alaska', 'northern-europe']));
   });
 
   it('every port has 4–8 attractions', () => {

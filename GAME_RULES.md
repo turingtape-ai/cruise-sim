@@ -18,50 +18,50 @@ requires updating **both** places in the same commit.
 
 Canonical names. Use these exact terms in code, UI, and docs.
 
-| Term | Definition |
-| --- | --- |
-| **Port** | A real-world cruise port on the globe. Has a location, size tier, and attractions. |
-| **Route** | An ordered list of Ports the ship visits, starting from the home port. Routes are round trips: after the final Port the ship sails back to the first. |
-| **Leg** | The great-circle passage between two consecutive Ports on a Route. |
-| **Cruise** | One full traversal of a Route by a ship carrying one passenger cohort, from departure at the home port to return. |
-| **Sailing Day** | A sim day spent underway on a Leg. Burns fuel; passengers consume onboard services. |
-| **Port Day** | A sim day (or part of one) docked at a Port. Passengers may take excursions; the ship restocks. |
-| **Module** | A room placed on a ship deck (cabin, buffet, bar, pool, …). Has footprint, cost, capacity, upkeep, appeal tags. *(Phase 2)* |
-| **Archetype** | A passenger category (families, retirees, party groups, luxury seekers, adventurers) with its own need weights and preferences. *(Phase 3)* |
-| **Need** | A decaying meter on a passenger: `food`, `fun`, `rest`, `novelty`. Fulfilled by modules, events, and excursions. *(Phase 3)* |
-| **Incident** | An emergency (storm, outbreak, mechanical failure, medical). Interface defined now; behavior in Phase 6. |
-| **Tick** | The atomic unit of sim time: **1 tick = 1 sim hour**. |
-| **Attraction** | A real point of interest at a Port; excursions are built on attractions. |
-| **Excursion** | A bookable shore activity at a Port, with price, duration, capacity, and appeal tags. |
+| Term            | Definition                                                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Port**        | A real-world cruise port on the globe. Has a location, size tier, and attractions.                                                                    |
+| **Route**       | An ordered list of Ports the ship visits, starting from the home port. Routes are round trips: after the final Port the ship sails back to the first. |
+| **Leg**         | The great-circle passage between two consecutive Ports on a Route.                                                                                    |
+| **Cruise**      | One full traversal of a Route by a ship carrying one passenger cohort, from departure at the home port to return.                                     |
+| **Sailing Day** | A sim day spent underway on a Leg. Burns fuel; passengers consume onboard services.                                                                   |
+| **Port Day**    | A sim day (or part of one) docked at a Port. Passengers may take excursions; the ship restocks.                                                       |
+| **Module**      | A room placed on a ship deck (cabin, buffet, bar, pool, …). Has footprint, cost, capacity, upkeep, appeal tags. _(Phase 2)_                           |
+| **Archetype**   | A passenger category (families, retirees, party groups, luxury seekers, adventurers) with its own need weights and preferences. _(Phase 3)_           |
+| **Need**        | A decaying meter on a passenger: `food`, `fun`, `rest`, `novelty`. Fulfilled by modules, events, and excursions. _(Phase 3)_                          |
+| **Incident**    | An emergency (storm, outbreak, mechanical failure, medical). Interface defined now; behavior in Phase 6.                                              |
+| **Tick**        | The atomic unit of sim time: **1 tick = 1 sim hour**.                                                                                                 |
+| **Attraction**  | A real point of interest at a Port; excursions are built on attractions.                                                                              |
+| **Excursion**   | A bookable shore activity at a Port, with price, duration, capacity, and appeal tags.                                                                 |
 
 ## 3. Simulation constants
 
 Single source of truth for tunables. Mirror of `src/sim/constants.ts` — keep in sync.
 
-| Constant | Value | Unit | Notes |
-| --- | --- | --- | --- |
-| `TICK_HOURS` | 1 | sim hours / tick | Atomic sim step. |
-| `EPOCH_ISO` | 2030-01-01T00:00Z | date | Sim date at tick 0. |
-| `TICKS_PER_REAL_SECOND` | 1 | ticks / real second at 1× | 2× and 4× multiply this. |
-| `SPEED_MULTIPLIERS` | 0, 1, 2, 4 | — | Pause, 1×, 2×, 4×. |
-| `SHIP_SPEED_KNOTS.coastal` | 18 | nm / sim hour | Small starter class. |
-| `SHIP_SPEED_KNOTS.panamax` | 20 | nm / sim hour | Mid class *(locked until Phase 5 reputation gates)*. |
-| `SHIP_SPEED_KNOTS.grande` | 22 | nm / sim hour | Large class *(locked)*. |
-| `FUEL_COST_PER_NM.coastal` | 18 | $ / nm | See fuel formula §4.1. |
-| `FUEL_COST_PER_NM.panamax` | 32 | $ / nm | |
-| `FUEL_COST_PER_NM.grande` | 55 | $ / nm | |
-| `PORT_STAY_HOURS` | 10 | sim hours | Default dock time per Port call. |
-| `PORT_FEE_BY_TIER` | 500 / 1200 / 2500 / 5000 | $ | Indexed by port size tier 1–4. Charged on arrival. *(Phase 5 — documented now, charged from Phase 1 at 0×; see Open Questions)* |
-| `STARTING_MONEY` | 500000 | $ | New game bankroll. |
-| `NEED_DECAY_PER_TICK.food` | 4 | pts / tick | Needs are 0–100. *(Phase 3)* |
-| `NEED_DECAY_PER_TICK.fun` | 3 | pts / tick | *(Phase 3)* |
-| `NEED_DECAY_PER_TICK.rest` | 2 | pts / tick | *(Phase 3)* |
-| `NEED_DECAY_PER_TICK.novelty` | 1.5 | pts / tick | *(Phase 3)* |
-| `ARCHETYPE_NEED_WEIGHTS` | see `constants.ts` | — | Per-archetype multipliers on decay & scoring. *(Phase 3)* |
-| `CREW_MORALE_DECAY_PER_SAILING_DAY` | 1.5 | pts / day | Morale 0–100. *(Phase 3)* |
-| `PRICE_ELASTICITY` | −1.4 | — | Exponent in demand curve §4.4. *(Phase 5)* |
-| `SATISFACTION_TO_STARS` | see §4.2 | — | Piecewise mapping. *(Phase 5)* |
-| `REPUTATION_SMOOTHING` | 0.2 | — | EWMA weight for new cruise outcomes §4.3. *(Phase 5)* |
+| Constant                            | Value                    | Unit                      | Notes                                                                                                                           |
+| ----------------------------------- | ------------------------ | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `TICK_HOURS`                        | 1                        | sim hours / tick          | Atomic sim step.                                                                                                                |
+| `EPOCH_ISO`                         | 2030-01-01T00:00Z        | date                      | Sim date at tick 0.                                                                                                             |
+| `TICKS_PER_REAL_SECOND`             | 1                        | ticks / real second at 1× | 2× and 4× multiply this.                                                                                                        |
+| `SPEED_MULTIPLIERS`                 | 0, 1, 2, 4               | —                         | Pause, 1×, 2×, 4×.                                                                                                              |
+| `SHIP_SPEED_KNOTS.coastal`          | 18                       | nm / sim hour             | Small starter class.                                                                                                            |
+| `SHIP_SPEED_KNOTS.panamax`          | 20                       | nm / sim hour             | Mid class _(locked until Phase 5 reputation gates)_.                                                                            |
+| `SHIP_SPEED_KNOTS.grande`           | 22                       | nm / sim hour             | Large class _(locked)_.                                                                                                         |
+| `FUEL_COST_PER_NM.coastal`          | 18                       | $ / nm                    | See fuel formula §4.1.                                                                                                          |
+| `FUEL_COST_PER_NM.panamax`          | 32                       | $ / nm                    |                                                                                                                                 |
+| `FUEL_COST_PER_NM.grande`           | 55                       | $ / nm                    |                                                                                                                                 |
+| `PORT_STAY_HOURS`                   | 10                       | sim hours                 | Default dock time per Port call.                                                                                                |
+| `PORT_FEE_BY_TIER`                  | 500 / 1200 / 2500 / 5000 | $                         | Indexed by port size tier 1–4. Charged on arrival. _(Phase 5 — documented now, charged from Phase 1 at 0×; see Open Questions)_ |
+| `STARTING_MONEY`                    | 500000                   | $                         | New game bankroll.                                                                                                              |
+| `NEED_DECAY_PER_TICK.food`          | 4                        | pts / tick                | Needs are 0–100. _(Phase 3)_                                                                                                    |
+| `NEED_DECAY_PER_TICK.fun`           | 3                        | pts / tick                | _(Phase 3)_                                                                                                                     |
+| `NEED_DECAY_PER_TICK.rest`          | 2                        | pts / tick                | _(Phase 3)_                                                                                                                     |
+| `NEED_DECAY_PER_TICK.novelty`       | 1.5                      | pts / tick                | _(Phase 3)_                                                                                                                     |
+| `ARCHETYPE_NEED_WEIGHTS`            | see `constants.ts`       | —                         | Per-archetype multipliers on decay & scoring. _(Phase 3)_                                                                       |
+| `CREW_MORALE_DECAY_PER_SAILING_DAY` | 1.5                      | pts / day                 | Morale 0–100. _(Phase 3)_                                                                                                       |
+| `PRICE_ELASTICITY`                  | −1.4                     | —                         | Exponent in demand curve §4.4. _(Phase 5)_                                                                                      |
+| `SATISFACTION_TO_STARS`             | see §4.2                 | —                         | Piecewise mapping. _(Phase 5)_                                                                                                  |
+| `REPUTATION_SMOOTHING`              | 0.2                      | —                         | EWMA weight for new cruise outcomes §4.3. _(Phase 5)_                                                                           |
 
 ## 4. Formulas
 
@@ -123,38 +123,38 @@ code changes — files are validated at load.
 
 ### 5.1 `data/ports.json` — array of Port
 
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `id` | string (kebab-case, unique) | Stable reference key used by routes and excursions. |
-| `name` | string | Display name, e.g. "Cozumel". |
-| `country` | string | Country or territory. |
-| `region` | `"caribbean" \| "mediterranean" \| "alaska" \| "northern-europe"` | Demand region. |
-| `lat`, `lon` | number (degrees, WGS84) | Position on the globe. lat −90…90, lon −180…180. |
-| `sizeTier` | 1–4 | 1 = tender village, 4 = megaport. Gates ship classes (Phase 5) and sets port fees. |
-| `attractions` | array of `{ name, kind }`, 4–8 entries | Real signature attractions. `kind` is a free tag (`beach`, `historic`, `nature`, `adventure`, `culture`, `scenic`, `family`, `nightlife`, `food`). |
+| Field         | Type                                                              | Meaning                                                                                                                                            |
+| ------------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`          | string (kebab-case, unique)                                       | Stable reference key used by routes and excursions.                                                                                                |
+| `name`        | string                                                            | Display name, e.g. "Cozumel".                                                                                                                      |
+| `country`     | string                                                            | Country or territory.                                                                                                                              |
+| `region`      | `"caribbean" \| "mediterranean" \| "alaska" \| "northern-europe"` | Demand region.                                                                                                                                     |
+| `lat`, `lon`  | number (degrees, WGS84)                                           | Position on the globe. lat −90…90, lon −180…180.                                                                                                   |
+| `sizeTier`    | 1–4                                                               | 1 = tender village, 4 = megaport. Gates ship classes (Phase 5) and sets port fees.                                                                 |
+| `attractions` | array of `{ name, kind }`, 4–8 entries                            | Real signature attractions. `kind` is a free tag (`beach`, `historic`, `nature`, `adventure`, `culture`, `scenic`, `family`, `nightlife`, `food`). |
 
 ### 5.2 `data/dining.json` — `{ buffets, restaurants, bars }`
 
 Each entry: `id` (unique), `name`, plus:
 
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `theme` / `cuisine` / `type` | string | Buffet theme, restaurant cuisine, or bar type. |
-| `cost` | number ($/day upkeep) | Daily operating cost when installed. |
-| `appeal` | 1–10 | Base draw of the venue. |
-| `tags` | string[] | Appeal tags matched against archetype preferences (Phase 3). |
+| Field                        | Type                  | Meaning                                                      |
+| ---------------------------- | --------------------- | ------------------------------------------------------------ |
+| `theme` / `cuisine` / `type` | string                | Buffet theme, restaurant cuisine, or bar type.               |
+| `cost`                       | number ($/day upkeep) | Daily operating cost when installed.                         |
+| `appeal`                     | 1–10                  | Base draw of the venue.                                      |
+| `tags`                       | string[]              | Appeal tags matched against archetype preferences (Phase 3). |
 
 ### 5.3 `data/excursions.json` — array of Excursion
 
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `id` | string (unique) | |
-| `portId` | string | Must reference an existing Port id (validated). |
-| `name` | string | e.g. "Chankanaab Park snorkel". |
-| `durationHours` | number | Must fit inside `PORT_STAY_HOURS`. |
-| `pricePerGuest` | number ($) | Player receives an excursion cut (Phase 5). |
-| `capacity` | number | Max guests per Port Day. |
-| `appealTags` | string[] | Matched against archetype preferences (Phase 3). |
+| Field           | Type            | Meaning                                          |
+| --------------- | --------------- | ------------------------------------------------ |
+| `id`            | string (unique) |                                                  |
+| `portId`        | string          | Must reference an existing Port id (validated).  |
+| `name`          | string          | e.g. "Chankanaab Park snorkel".                  |
+| `durationHours` | number          | Must fit inside `PORT_STAY_HOURS`.               |
+| `pricePerGuest` | number ($)      | Player receives an excursion cut (Phase 5).      |
+| `capacity`      | number          | Max guests per Port Day.                         |
+| `appealTags`    | string[]        | Matched against archetype preferences (Phase 3). |
 
 ## 6. Phase checklist
 

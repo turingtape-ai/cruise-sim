@@ -3,12 +3,7 @@ import { advanceTicks } from './tick';
 import { createNewGame } from './state';
 import { loadGameData } from './data/load';
 import { haversineNm } from './geo';
-import {
-  FUEL_COST_PER_NM,
-  PORT_STAY_HOURS,
-  SHIP_SPEED_KNOTS,
-  STARTING_MONEY,
-} from './constants';
+import { FUEL_COST_PER_NM, PORT_STAY_HOURS, SHIP_SPEED_KNOTS, STARTING_MONEY } from './constants';
 import type { GameState } from './types';
 
 const { portsById } = loadGameData();
