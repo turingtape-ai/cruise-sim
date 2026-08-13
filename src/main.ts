@@ -38,7 +38,12 @@ async function boot(): Promise<void> {
     onPortClick: (portId) => store.getState().addPortToRoute(portId),
     onPortHover: (portId, x, y) => hud.showHoverCard(portId, x, y),
   });
-  const shipPanel = initShipPanel(hudEl.querySelector<HTMLElement>('.ship-panel')!, store, data);
+  const shipPanel = initShipPanel(
+    hudEl.querySelector<HTMLElement>('.ship-panel')!,
+    store,
+    data,
+    (msg) => hud.toast(msg),
+  );
   const shipScene = await ShipScene.create(shipEl, data, {
     onCellTap: (deck, x) => {
       const moduleId = shipPanel.selectedModuleId;

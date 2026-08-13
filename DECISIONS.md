@@ -2,6 +2,16 @@
 
 Unspecified calls made while building, newest first.
 
+- **Excursions are auto-run, not curated**: every port call offers all of that port's
+  excursions; participation is driven by archetype affinity and capped by capacity. A
+  curation UI (pick which to offer, set markups) belongs with Phase 5 pricing.
+- **Events schedule daily, not hourly**: one recurring "evening program" that fires at
+  20:00 keeps the scheduler legible at 1×–4× speeds; `durationHours` is retained in data
+  for a finer scheduler later. Excursion/event effects flow only through needs — no
+  direct satisfaction edits.
+- **Excursion log counts bookings** (a guest may join several excursions in one port), so
+  bookings can exceed guests aboard.
+
 - **Passengers are cohorts, not agents**: archetype groups with averaged need meters. Cheap,
   serializable, and enough signal for satisfaction/reputation; individual agents walking the
   corridors can come later if Phase 4+ needs them.

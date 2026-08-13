@@ -65,6 +65,10 @@ export function initHud(
       <div class="ship-status"></div>
       <ol class="route-list"></ol>
       <div class="route-summary"></div>
+      <div class="events-section">
+        <h2>Evening events</h2>
+        <ul class="event-list"></ul>
+      </div>
       <div class="guests-section" hidden>
         <h2>Guests aboard</h2>
         <div class="guests-summary"></div>
@@ -88,6 +92,7 @@ export function initHud(
   const reputationEl = q('.reputation');
   const dateEl = q('.date');
   const guestsSection = q('.guests-section');
+  const eventListEl = q<HTMLUListElement>('.event-list');
   const guestsSummaryEl = q('.guests-summary');
   const needBarsEl = q('.need-bars');
   const statusEl = q('.ship-status');
@@ -98,6 +103,11 @@ export function initHud(
   const logListEl = q<HTMLUListElement>('.log-list');
   const hoverCard = q('.hover-card');
   const speedButtons = [...root.querySelectorAll<HTMLButtonElement>('[data-speed]')];
+
+  root.addEventListener('change', (e) => {
+    const box = (e.target as HTMLElement).closest<HTMLInputElement>('input[data-event]');
+    if (box) store.getState().toggleEvent(box.dataset.event!);
+  });
 
   root.addEventListener('click', (e) => {
     const btn = (e.target as HTMLElement).closest('button');
@@ -160,11 +170,36 @@ export function initHud(
       .join('');
   }
 
+  function updateEvents(game: GameState): void {
+    const aboard = new Set(game.ship.layout.placed.map((p) => p.moduleId));
+    eventListEl.innerHTML = data.events
+      .map((ev) => {
+        const hasVenue = aboard.has(ev.venue);
+        const venueName = data.modulesById.get(ev.venue)?.name ?? ev.venue;
+        const checked = game.eventProgram.includes(ev.id);
+        return `<li class="event-row ${hasVenue ? '' : 'missing-venue'}">
+          <label title="${hasVenue ? `Runs nightly in the ${venueName}` : `Needs a ${venueName} aboard`}">
+            <input type="checkbox" data-event="${ev.id}" ${checked ? 'checked' : ''} />
+            <span class="ev-name">${ev.name}</span>
+            <span class="ev-meta">${fmtMoney(ev.costPerRun)}/night${hasVenue ? '' : ` · needs ${venueName}`}</span>
+          </label>
+        </li>`;
+      })
+      .join('');
+  }
+
+  let lastEventsKey = '';
+
   function update(game: GameState): void {
     moneyEl.textContent = fmtMoney(game.money);
     reputationEl.textContent = `${game.reputation.toFixed(1)}★`;
     dateEl.textContent = formatTick(game.tick);
     updateGuests(game);
+    const eventsKey = JSON.stringify([game.eventProgram, game.ship.layout.placed.length]);
+    if (eventsKey !== lastEventsKey) {
+      lastEventsKey = eventsKey;
+      updateEvents(game);
+    }
     statusEl.textContent = shipStatusText(game);
     for (const b of speedButtons)
       b.classList.toggle('active', Number(b.dataset.speed) === game.speed);

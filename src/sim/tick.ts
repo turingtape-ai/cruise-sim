@@ -22,12 +22,7 @@ import { formatTickShort, tickToDate } from './time';
 import { layoutStats } from './ship';
 import { engineerFuelMultiplier, hasCaptain, stepCrewMorale, wagesPerTick } from './crew';
 import { grantNoveltyBoost, resolveCruise, startCruise, stepNeeds } from './passengers';
-import {
-  effectiveCapacity,
-  runEventProgram,
-  runExcursions,
-  themeUpkeepPerDay,
-} from './activities';
+import { effectiveCapacity, runEventProgram, runExcursions, themeUpkeepPerDay } from './activities';
 
 /** Static content the sim needs every tick, bundled once. */
 export interface SimData {
@@ -199,7 +194,7 @@ function stepOneTick(s: GameState, data: SimData, events: SimEvent[]): void {
           pushLog(
             s.log,
             s.tick,
-            `${call.participants} guests joined excursions in ${portName} — our cut $${Math.round(call.cut).toLocaleString('en-US')}.`,
+            `${call.participants} excursion bookings in ${portName} — our cut $${Math.round(call.cut).toLocaleString('en-US')}.`,
           );
         }
       }

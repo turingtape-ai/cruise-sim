@@ -40,10 +40,7 @@ describe('themes', () => {
   });
 
   it('tag affinity favors matching archetypes, capped', () => {
-    expect(tagAffinity(['party', 'night'], 'party-groups')).toBeCloseTo(
-      1 + 2 * TAG_MATCH_BONUS,
-      9,
-    );
+    expect(tagAffinity(['party', 'night'], 'party-groups')).toBeCloseTo(1 + 2 * TAG_MATCH_BONUS, 9);
     expect(tagAffinity(['party', 'night', 'tropical'], 'party-groups')).toBeCloseTo(
       1 + 2 * TAG_MATCH_BONUS,
       9,
@@ -91,7 +88,14 @@ describe('runExcursions', () => {
     const excursions = excursionsByPortId.get('nassau')!;
     const guide = [
       ...starterCrew(),
-      { id: 9, name: 'Wesley Costa', roleId: 'excursion-guide', skill: 5, wagePerDay: 0, morale: 100 },
+      {
+        id: 9,
+        name: 'Wesley Costa',
+        roleId: 'excursion-guide',
+        skill: 5,
+        wagePerDay: 0,
+        morale: 100,
+      },
     ];
     runExcursions(without, excursions, starterCrew(), crewRolesById);
     runExcursions(withGuide, excursions, guide, crewRolesById);
