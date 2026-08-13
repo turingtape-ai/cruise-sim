@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { advanceTicks } from './tick';
 import { createNewGame } from './state';
 import { loadGameData } from './data/load';
-import { haversineNm } from './geo';
+import { seaRoute } from './searoute';
 import { FUEL_COST_PER_NM, PORT_STAY_HOURS, SHIP_SPEED_KNOTS, STARTING_MONEY } from './constants';
 import type { GameState } from './types';
 
@@ -53,7 +53,7 @@ describe('advanceTicks', () => {
 
   it('arrives, pays exactly the leg distance in fuel, and docks for the stay', () => {
     const g = gameWithRoute(['miami', 'nassau']);
-    const nm = haversineNm(portsById.get('miami')!, portsById.get('nassau')!);
+    const nm = seaRoute(portsById.get('miami')!, portsById.get('nassau')!).nm;
     const sailingTicks = Math.ceil(nm / SHIP_SPEED_KNOTS.coastal);
     const { state, events } = advanceTicks(g, PORT_STAY_HOURS + sailingTicks, portsById);
     expect(state.ship.position).toMatchObject({ kind: 'docked', portId: 'nassau' });
