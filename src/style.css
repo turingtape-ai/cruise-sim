@@ -1,0 +1,332 @@
+/* Harbor & Horizon — nautical palette: deep navy, cream, coral, seafoam. */
+
+:root {
+  --navy: #0b1d33;
+  --navy-2: #10294a;
+  --navy-card: rgba(13, 32, 58, 0.88);
+  --cream: #f5e9d4;
+  --cream-dim: #cfc4ae;
+  --coral: #ff7f66;
+  --seafoam: #7fd8c8;
+  --radius: 14px;
+  font-family:
+    'Avenir Next',
+    'Nunito',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--navy);
+  color: var(--cream);
+}
+
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+#globe {
+  position: absolute;
+  inset: 0;
+}
+
+#globe canvas {
+  display: block;
+  cursor: grab;
+}
+
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+#hud > * {
+  pointer-events: auto;
+}
+
+/* ---- Top bar ---- */
+
+.hud-top {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 18px;
+  background: var(--navy-card);
+  border: 1px solid rgba(245, 233, 212, 0.12);
+  border-radius: var(--radius);
+  backdrop-filter: blur(6px);
+}
+
+.brand {
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  color: var(--seafoam);
+  white-space: nowrap;
+}
+
+.stat {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.stat.money {
+  color: var(--coral);
+  font-size: 1.05rem;
+}
+
+.speed-controls {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+button {
+  font: inherit;
+  font-weight: 700;
+  color: var(--cream);
+  background: var(--navy-2);
+  border: 1px solid rgba(245, 233, 212, 0.18);
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    transform 0.05s;
+}
+
+button:hover {
+  background: #17335c;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+.speed-controls button.active {
+  background: var(--seafoam);
+  border-color: var(--seafoam);
+  color: var(--navy);
+}
+
+.sys-controls {
+  display: flex;
+  gap: 6px;
+}
+
+.sys-controls button {
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+}
+
+/* ---- Panels ---- */
+
+.panel {
+  position: absolute;
+  background: var(--navy-card);
+  border: 1px solid rgba(245, 233, 212, 0.12);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  backdrop-filter: blur(6px);
+}
+
+.panel h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--seafoam);
+  margin-bottom: 8px;
+}
+
+.route-panel {
+  top: 84px;
+  right: 12px;
+  width: 264px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.ship-status {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--cream);
+}
+
+.route-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.route-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: rgba(245, 233, 212, 0.06);
+  border-radius: 8px;
+  padding: 5px 8px;
+}
+
+.stop-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--seafoam);
+  color: var(--navy);
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex: none;
+}
+
+.route-list .remove {
+  margin-left: auto;
+  padding: 0 7px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  background: transparent;
+  border-color: transparent;
+  color: var(--cream-dim);
+}
+
+.route-list .remove:hover {
+  color: var(--coral);
+  background: rgba(255, 127, 102, 0.12);
+}
+
+.route-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  font-size: 0.82rem;
+  color: var(--cream-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.clear-route {
+  margin-top: 10px;
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+.hint {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--cream-dim);
+  line-height: 1.4;
+}
+
+.log-panel {
+  left: 12px;
+  bottom: 12px;
+  width: 340px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.log-list {
+  list-style: none;
+  padding: 0;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--cream-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.log-list li:first-child {
+  color: var(--cream);
+}
+
+/* ---- Hover card ---- */
+
+.hover-card {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  background: var(--navy-card);
+  border: 1px solid rgba(127, 216, 200, 0.35);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  pointer-events: none;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+
+.hover-card h3 {
+  font-size: 1rem;
+  color: var(--seafoam);
+}
+
+.hover-card .meta {
+  font-size: 0.78rem;
+  color: var(--cream-dim);
+  margin: 2px 0 8px;
+}
+
+.hover-card ul {
+  list-style: none;
+  padding: 0;
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.hover-card .kind {
+  font-size: 0.68rem;
+  color: var(--navy);
+  background: var(--cream-dim);
+  border-radius: 6px;
+  padding: 1px 5px;
+  margin-left: 4px;
+  vertical-align: 1px;
+}
+
+.hover-card .cta {
+  margin-top: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--coral);
+}
+
+/* ---- Error overlay ---- */
+
+.fatal-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--navy);
+  color: var(--coral);
+  font-size: 1rem;
+  padding: 40px;
+  text-align: center;
+  white-space: pre-wrap;
+}

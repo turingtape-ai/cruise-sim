@@ -7,9 +7,9 @@ export default defineConfig({
     chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
+        // pixi.js joins this list when Phase 2 starts importing it.
         manualChunks: {
           three: ['three'],
-          pixi: ['pixi.js'],
         },
       },
     },

@@ -1,0 +1,176 @@
+{
+  "buffets": [
+    {
+      "id": "buffet-harborside",
+      "name": "Harborside Market",
+      "theme": "International classics",
+      "cost": 900,
+      "appeal": 5,
+      "tags": ["family", "comfort", "variety"]
+    },
+    {
+      "id": "buffet-tropicana",
+      "name": "Tropicana Grill",
+      "theme": "Caribbean barbecue",
+      "cost": 750,
+      "appeal": 6,
+      "tags": ["party", "comfort", "outdoor"]
+    },
+    {
+      "id": "buffet-mercato",
+      "name": "Il Mercato",
+      "theme": "Mediterranean mezze & pasta",
+      "cost": 850,
+      "appeal": 6,
+      "tags": ["variety", "healthy", "culture"]
+    },
+    {
+      "id": "buffet-midnight",
+      "name": "Midnight Galley",
+      "theme": "Late-night comfort food",
+      "cost": 600,
+      "appeal": 4,
+      "tags": ["party", "comfort", "night"]
+    },
+    {
+      "id": "buffet-garden",
+      "name": "The Greenhouse",
+      "theme": "Salads & plant-forward",
+      "cost": 700,
+      "appeal": 4,
+      "tags": ["healthy", "luxury", "quiet"]
+    },
+    {
+      "id": "buffet-smorgasbord",
+      "name": "Fjord Table",
+      "theme": "Nordic smörgåsbord",
+      "cost": 800,
+      "appeal": 5,
+      "tags": ["culture", "healthy", "variety"]
+    }
+  ],
+  "restaurants": [
+    {
+      "id": "rest-brasa",
+      "name": "Brasa Steakhouse",
+      "cuisine": "Steakhouse",
+      "cost": 1200,
+      "appeal": 8,
+      "tags": ["luxury", "date-night", "comfort"]
+    },
+    {
+      "id": "rest-omakase",
+      "name": "Kaiyō Omakase",
+      "cuisine": "Japanese sushi",
+      "cost": 1400,
+      "appeal": 9,
+      "tags": ["luxury", "adventurous", "quiet"]
+    },
+    {
+      "id": "rest-trattoria",
+      "name": "Trattoria Vela",
+      "cuisine": "Italian",
+      "cost": 950,
+      "appeal": 7,
+      "tags": ["family", "comfort", "date-night"]
+    },
+    {
+      "id": "rest-cantina",
+      "name": "Cantina del Sol",
+      "cuisine": "Mexican coastal",
+      "cost": 850,
+      "appeal": 6,
+      "tags": ["party", "family", "outdoor"]
+    },
+    {
+      "id": "rest-bistro",
+      "name": "Bistro Lumière",
+      "cuisine": "French bistro",
+      "cost": 1300,
+      "appeal": 8,
+      "tags": ["luxury", "date-night", "culture"]
+    },
+    {
+      "id": "rest-tandoor",
+      "name": "Monsoon Tandoor",
+      "cuisine": "Indian",
+      "cost": 900,
+      "appeal": 7,
+      "tags": ["adventurous", "variety", "comfort"]
+    },
+    {
+      "id": "rest-smokehouse",
+      "name": "Driftwood Smokehouse",
+      "cuisine": "American barbecue",
+      "cost": 800,
+      "appeal": 6,
+      "tags": ["family", "party", "comfort"]
+    },
+    {
+      "id": "rest-meze",
+      "name": "Aegean Meze House",
+      "cuisine": "Greek",
+      "cost": 900,
+      "appeal": 7,
+      "tags": ["healthy", "culture", "date-night"]
+    }
+  ],
+  "bars": [
+    {
+      "id": "bar-tiki",
+      "name": "Castaway Tiki Bar",
+      "type": "Poolside tiki bar",
+      "cost": 500,
+      "appeal": 7,
+      "tags": ["party", "outdoor", "tropical"]
+    },
+    {
+      "id": "bar-martini",
+      "name": "The Gimlet Room",
+      "type": "Martini lounge",
+      "cost": 650,
+      "appeal": 7,
+      "tags": ["luxury", "quiet", "date-night"]
+    },
+    {
+      "id": "bar-sports",
+      "name": "Crow's Nest Sports Bar",
+      "type": "Sports bar",
+      "cost": 550,
+      "appeal": 5,
+      "tags": ["party", "casual", "family"]
+    },
+    {
+      "id": "bar-wine",
+      "name": "Cellar 21",
+      "type": "Wine bar",
+      "cost": 700,
+      "appeal": 7,
+      "tags": ["luxury", "quiet", "culture"]
+    },
+    {
+      "id": "bar-pub",
+      "name": "The Anchor & Compass",
+      "type": "British pub",
+      "cost": 500,
+      "appeal": 6,
+      "tags": ["casual", "comfort", "party"]
+    },
+    {
+      "id": "bar-cafe",
+      "name": "Café Meridian",
+      "type": "Coffee & pastry café",
+      "cost": 400,
+      "appeal": 5,
+      "tags": ["quiet", "family", "morning"]
+    },
+    {
+      "id": "bar-piano",
+      "name": "Starlight Piano Bar",
+      "type": "Piano bar",
+      "cost": 600,
+      "appeal": 6,
+      "tags": ["date-night", "quiet", "culture"]
+    }
+  ]
+}

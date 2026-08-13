@@ -1,0 +1,655 @@
+[
+  {
+    "id": "miami",
+    "name": "Miami",
+    "country": "United States",
+    "region": "caribbean",
+    "lat": 25.77,
+    "lon": -80.18,
+    "sizeTier": 4,
+    "attractions": [
+      { "name": "South Beach", "kind": "beach" },
+      { "name": "Wynwood Walls", "kind": "culture" },
+      { "name": "Little Havana", "kind": "food" },
+      { "name": "Everglades airboat tour", "kind": "nature" },
+      { "name": "Vizcaya Museum & Gardens", "kind": "historic" },
+      { "name": "Bayside Marketplace", "kind": "family" }
+    ]
+  },
+  {
+    "id": "cozumel",
+    "name": "Cozumel",
+    "country": "Mexico",
+    "region": "caribbean",
+    "lat": 20.51,
+    "lon": -86.95,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "Chankanaab Park", "kind": "nature" },
+      { "name": "Palancar Reef snorkeling", "kind": "adventure" },
+      { "name": "San Gervasio Mayan ruins", "kind": "historic" },
+      { "name": "Playa Mia beach club", "kind": "beach" },
+      { "name": "El Cielo sandbar", "kind": "scenic" },
+      { "name": "Punta Sur Eco Park", "kind": "nature" }
+    ]
+  },
+  {
+    "id": "nassau",
+    "name": "Nassau",
+    "country": "Bahamas",
+    "region": "caribbean",
+    "lat": 25.08,
+    "lon": -77.35,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "Atlantis Paradise Island", "kind": "family" },
+      { "name": "Queen's Staircase", "kind": "historic" },
+      { "name": "Cable Beach", "kind": "beach" },
+      { "name": "Blue Lagoon Island", "kind": "nature" },
+      { "name": "Junkanoo Beach", "kind": "beach" },
+      { "name": "Straw Market", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "san-juan",
+    "name": "San Juan",
+    "country": "Puerto Rico",
+    "region": "caribbean",
+    "lat": 18.47,
+    "lon": -66.12,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "Castillo San Felipe del Morro", "kind": "historic" },
+      { "name": "Old San Juan streets", "kind": "culture" },
+      { "name": "El Yunque rainforest", "kind": "nature" },
+      { "name": "Condado Beach", "kind": "beach" },
+      { "name": "Casa Bacardí distillery", "kind": "food" },
+      { "name": "Paseo de la Princesa", "kind": "scenic" }
+    ]
+  },
+  {
+    "id": "charlotte-amalie",
+    "name": "Charlotte Amalie",
+    "country": "U.S. Virgin Islands",
+    "region": "caribbean",
+    "lat": 18.34,
+    "lon": -64.93,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Magens Bay", "kind": "beach" },
+      { "name": "Skyride to Paradise Point", "kind": "scenic" },
+      { "name": "Coral World Ocean Park", "kind": "family" },
+      { "name": "Blackbeard's Castle", "kind": "historic" },
+      { "name": "Coki Beach snorkeling", "kind": "adventure" }
+    ]
+  },
+  {
+    "id": "philipsburg",
+    "name": "Philipsburg",
+    "country": "Sint Maarten",
+    "region": "caribbean",
+    "lat": 18.03,
+    "lon": -63.05,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Maho Beach plane spotting", "kind": "scenic" },
+      { "name": "Great Bay Boardwalk", "kind": "beach" },
+      { "name": "Orient Bay", "kind": "beach" },
+      { "name": "Fort Amsterdam", "kind": "historic" },
+      { "name": "Front Street shopping", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "george-town",
+    "name": "George Town",
+    "country": "Cayman Islands",
+    "region": "caribbean",
+    "lat": 19.29,
+    "lon": -81.38,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Seven Mile Beach", "kind": "beach" },
+      { "name": "Stingray City sandbar", "kind": "adventure" },
+      { "name": "Cayman Turtle Centre", "kind": "family" },
+      { "name": "Hell rock formations", "kind": "scenic" },
+      { "name": "USS Kittiwake wreck dive", "kind": "adventure" }
+    ]
+  },
+  {
+    "id": "montego-bay",
+    "name": "Montego Bay",
+    "country": "Jamaica",
+    "region": "caribbean",
+    "lat": 18.47,
+    "lon": -77.92,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Doctor's Cave Beach", "kind": "beach" },
+      { "name": "Dunn's River Falls", "kind": "adventure" },
+      { "name": "Rose Hall Great House", "kind": "historic" },
+      { "name": "Martha Brae river rafting", "kind": "nature" },
+      { "name": "The Hip Strip", "kind": "nightlife" }
+    ]
+  },
+  {
+    "id": "bridgetown",
+    "name": "Bridgetown",
+    "country": "Barbados",
+    "region": "caribbean",
+    "lat": 13.1,
+    "lon": -59.62,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Carlisle Bay shipwreck snorkel", "kind": "adventure" },
+      { "name": "Harrison's Cave", "kind": "nature" },
+      { "name": "Oistins Fish Fry", "kind": "food" },
+      { "name": "Mount Gay rum distillery", "kind": "food" },
+      { "name": "Bathsheba coast", "kind": "scenic" }
+    ]
+  },
+  {
+    "id": "willemstad",
+    "name": "Willemstad",
+    "country": "Curaçao",
+    "region": "caribbean",
+    "lat": 12.11,
+    "lon": -68.93,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Handelskade waterfront", "kind": "scenic" },
+      { "name": "Queen Emma pontoon bridge", "kind": "historic" },
+      { "name": "Hato Caves", "kind": "nature" },
+      { "name": "Playa Kenepa", "kind": "beach" },
+      { "name": "Curaçao Sea Aquarium", "kind": "family" }
+    ]
+  },
+  {
+    "id": "castries",
+    "name": "Castries",
+    "country": "Saint Lucia",
+    "region": "caribbean",
+    "lat": 14.01,
+    "lon": -60.99,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "The Pitons", "kind": "scenic" },
+      { "name": "Sulphur Springs drive-in volcano", "kind": "nature" },
+      { "name": "Marigot Bay", "kind": "scenic" },
+      { "name": "Pigeon Island National Park", "kind": "historic" },
+      { "name": "Reduit Beach", "kind": "beach" }
+    ]
+  },
+  {
+    "id": "basseterre",
+    "name": "Basseterre",
+    "country": "Saint Kitts and Nevis",
+    "region": "caribbean",
+    "lat": 17.3,
+    "lon": -62.73,
+    "sizeTier": 1,
+    "attractions": [
+      { "name": "Brimstone Hill Fortress", "kind": "historic" },
+      { "name": "St. Kitts Scenic Railway", "kind": "scenic" },
+      { "name": "Timothy Hill overlook", "kind": "scenic" },
+      { "name": "South Friars Bay", "kind": "beach" },
+      { "name": "Romney Manor gardens", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "barcelona",
+    "name": "Barcelona",
+    "country": "Spain",
+    "region": "mediterranean",
+    "lat": 41.38,
+    "lon": 2.18,
+    "sizeTier": 4,
+    "attractions": [
+      { "name": "Sagrada Família", "kind": "historic" },
+      { "name": "La Rambla & Boqueria Market", "kind": "food" },
+      { "name": "Park Güell", "kind": "scenic" },
+      { "name": "Gothic Quarter", "kind": "culture" },
+      { "name": "Barceloneta Beach", "kind": "beach" },
+      { "name": "Camp Nou stadium", "kind": "family" }
+    ]
+  },
+  {
+    "id": "civitavecchia",
+    "name": "Civitavecchia (Rome)",
+    "country": "Italy",
+    "region": "mediterranean",
+    "lat": 42.09,
+    "lon": 11.79,
+    "sizeTier": 4,
+    "attractions": [
+      { "name": "Colosseum", "kind": "historic" },
+      { "name": "Vatican Museums & Sistine Chapel", "kind": "culture" },
+      { "name": "Trevi Fountain", "kind": "scenic" },
+      { "name": "Roman Forum", "kind": "historic" },
+      { "name": "Forte Michelangelo", "kind": "historic" },
+      { "name": "Trastevere food walk", "kind": "food" }
+    ]
+  },
+  {
+    "id": "marseille",
+    "name": "Marseille",
+    "country": "France",
+    "region": "mediterranean",
+    "lat": 43.3,
+    "lon": 5.37,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "Vieux-Port", "kind": "scenic" },
+      { "name": "Notre-Dame de la Garde", "kind": "historic" },
+      { "name": "Calanques National Park", "kind": "nature" },
+      { "name": "Le Panier district", "kind": "culture" },
+      { "name": "Château d'If", "kind": "historic" }
+    ]
+  },
+  {
+    "id": "palma",
+    "name": "Palma de Mallorca",
+    "country": "Spain",
+    "region": "mediterranean",
+    "lat": 39.57,
+    "lon": 2.65,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "Palma Cathedral (La Seu)", "kind": "historic" },
+      { "name": "Bellver Castle", "kind": "historic" },
+      { "name": "Valldemossa village", "kind": "culture" },
+      { "name": "Cuevas del Drach", "kind": "nature" },
+      { "name": "Playa de Palma", "kind": "beach" }
+    ]
+  },
+  {
+    "id": "naples",
+    "name": "Naples",
+    "country": "Italy",
+    "region": "mediterranean",
+    "lat": 40.84,
+    "lon": 14.25,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "Pompeii ruins", "kind": "historic" },
+      { "name": "Mount Vesuvius crater hike", "kind": "adventure" },
+      { "name": "Amalfi Coast drive", "kind": "scenic" },
+      { "name": "Capri boat trip", "kind": "scenic" },
+      { "name": "Naples pizza tour", "kind": "food" },
+      { "name": "Spaccanapoli old town", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "venice",
+    "name": "Venice",
+    "country": "Italy",
+    "region": "mediterranean",
+    "lat": 45.44,
+    "lon": 12.34,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "St. Mark's Square & Basilica", "kind": "historic" },
+      { "name": "Doge's Palace", "kind": "historic" },
+      { "name": "Gondola canal ride", "kind": "scenic" },
+      { "name": "Rialto Bridge", "kind": "scenic" },
+      { "name": "Murano glassblowing", "kind": "culture" },
+      { "name": "Burano island", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "dubrovnik",
+    "name": "Dubrovnik",
+    "country": "Croatia",
+    "region": "mediterranean",
+    "lat": 42.65,
+    "lon": 18.09,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Old Town walls walk", "kind": "historic" },
+      { "name": "Cable car to Mount Srđ", "kind": "scenic" },
+      { "name": "Lokrum Island", "kind": "nature" },
+      { "name": "Stradun promenade", "kind": "culture" },
+      { "name": "Sea kayaking under the walls", "kind": "adventure" }
+    ]
+  },
+  {
+    "id": "santorini",
+    "name": "Santorini",
+    "country": "Greece",
+    "region": "mediterranean",
+    "lat": 36.42,
+    "lon": 25.43,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Oia village", "kind": "scenic" },
+      { "name": "Caldera boat tour", "kind": "scenic" },
+      { "name": "Fira cliff town", "kind": "culture" },
+      { "name": "Akrotiri ruins", "kind": "historic" },
+      { "name": "Red Beach", "kind": "beach" },
+      { "name": "Santo Wines terrace", "kind": "food" }
+    ]
+  },
+  {
+    "id": "mykonos",
+    "name": "Mykonos",
+    "country": "Greece",
+    "region": "mediterranean",
+    "lat": 37.45,
+    "lon": 25.33,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Little Venice", "kind": "scenic" },
+      { "name": "Windmills of Kato Mili", "kind": "historic" },
+      { "name": "Delos ruins day trip", "kind": "historic" },
+      { "name": "Paradise Beach", "kind": "nightlife" },
+      { "name": "Chora alleyways", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "piraeus",
+    "name": "Piraeus (Athens)",
+    "country": "Greece",
+    "region": "mediterranean",
+    "lat": 37.94,
+    "lon": 23.65,
+    "sizeTier": 4,
+    "attractions": [
+      { "name": "Acropolis & Parthenon", "kind": "historic" },
+      { "name": "Plaka district", "kind": "culture" },
+      { "name": "Acropolis Museum", "kind": "culture" },
+      { "name": "Temple of Poseidon at Sounion", "kind": "historic" },
+      { "name": "Ancient Agora", "kind": "historic" },
+      { "name": "Monastiraki flea market", "kind": "food" }
+    ]
+  },
+  {
+    "id": "kusadasi",
+    "name": "Kuşadası",
+    "country": "Türkiye",
+    "region": "mediterranean",
+    "lat": 37.86,
+    "lon": 27.26,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Ephesus ruins", "kind": "historic" },
+      { "name": "House of the Virgin Mary", "kind": "historic" },
+      { "name": "Ladies Beach", "kind": "beach" },
+      { "name": "Şirince village", "kind": "culture" },
+      { "name": "Grand Bazaar shopping", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "valletta",
+    "name": "Valletta",
+    "country": "Malta",
+    "region": "mediterranean",
+    "lat": 35.9,
+    "lon": 14.51,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "St. John's Co-Cathedral", "kind": "historic" },
+      { "name": "Upper Barrakka Gardens", "kind": "scenic" },
+      { "name": "Grand Harbour boat tour", "kind": "scenic" },
+      { "name": "Mdina old city", "kind": "historic" },
+      { "name": "Blue Grotto", "kind": "nature" }
+    ]
+  },
+  {
+    "id": "seattle",
+    "name": "Seattle",
+    "country": "United States",
+    "region": "alaska",
+    "lat": 47.6,
+    "lon": -122.34,
+    "sizeTier": 4,
+    "attractions": [
+      { "name": "Pike Place Market", "kind": "food" },
+      { "name": "Space Needle", "kind": "scenic" },
+      { "name": "Chihuly Garden and Glass", "kind": "culture" },
+      { "name": "Waterfront & Great Wheel", "kind": "family" },
+      { "name": "Museum of Pop Culture", "kind": "culture" },
+      { "name": "Kerry Park viewpoint", "kind": "scenic" }
+    ]
+  },
+  {
+    "id": "vancouver",
+    "name": "Vancouver",
+    "country": "Canada",
+    "region": "alaska",
+    "lat": 49.29,
+    "lon": -123.11,
+    "sizeTier": 4,
+    "attractions": [
+      { "name": "Stanley Park seawall", "kind": "nature" },
+      { "name": "Capilano Suspension Bridge", "kind": "adventure" },
+      { "name": "Granville Island market", "kind": "food" },
+      { "name": "Gastown steam clock", "kind": "culture" },
+      { "name": "Grouse Mountain", "kind": "scenic" }
+    ]
+  },
+  {
+    "id": "juneau",
+    "name": "Juneau",
+    "country": "United States",
+    "region": "alaska",
+    "lat": 58.3,
+    "lon": -134.42,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Mendenhall Glacier", "kind": "nature" },
+      { "name": "Mount Roberts Tramway", "kind": "scenic" },
+      { "name": "Whale watching in Auke Bay", "kind": "nature" },
+      { "name": "Tracy Arm Fjord cruise", "kind": "scenic" },
+      { "name": "Salmon bake", "kind": "food" }
+    ]
+  },
+  {
+    "id": "ketchikan",
+    "name": "Ketchikan",
+    "country": "United States",
+    "region": "alaska",
+    "lat": 55.34,
+    "lon": -131.65,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Creek Street boardwalk", "kind": "historic" },
+      { "name": "Misty Fjords floatplane", "kind": "scenic" },
+      { "name": "Totem Bight State Park", "kind": "culture" },
+      { "name": "Great Alaskan Lumberjack Show", "kind": "family" },
+      { "name": "Saxman Native Village", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "skagway",
+    "name": "Skagway",
+    "country": "United States",
+    "region": "alaska",
+    "lat": 59.46,
+    "lon": -135.31,
+    "sizeTier": 1,
+    "attractions": [
+      { "name": "White Pass & Yukon Route Railroad", "kind": "scenic" },
+      { "name": "Klondike Gold Rush historic district", "kind": "historic" },
+      { "name": "Chilkoot Trail hike", "kind": "adventure" },
+      { "name": "Dog sledding camp", "kind": "family" },
+      { "name": "Yukon Suspension Bridge", "kind": "adventure" }
+    ]
+  },
+  {
+    "id": "sitka",
+    "name": "Sitka",
+    "country": "United States",
+    "region": "alaska",
+    "lat": 57.05,
+    "lon": -135.33,
+    "sizeTier": 1,
+    "attractions": [
+      { "name": "Sitka National Historical Park totems", "kind": "culture" },
+      { "name": "Alaska Raptor Center", "kind": "nature" },
+      { "name": "St. Michael's Cathedral", "kind": "historic" },
+      { "name": "Fortress of the Bear", "kind": "family" },
+      { "name": "Sea Otter & Wildlife Quest", "kind": "nature" }
+    ]
+  },
+  {
+    "id": "icy-strait-point",
+    "name": "Icy Strait Point",
+    "country": "United States",
+    "region": "alaska",
+    "lat": 58.13,
+    "lon": -135.44,
+    "sizeTier": 1,
+    "attractions": [
+      { "name": "ZipRider zipline", "kind": "adventure" },
+      { "name": "Whale watching in Icy Strait", "kind": "nature" },
+      { "name": "Tlingit cultural performance", "kind": "culture" },
+      { "name": "Spasski River bear search", "kind": "nature" },
+      { "name": "Hoonah beach trail", "kind": "scenic" }
+    ]
+  },
+  {
+    "id": "victoria",
+    "name": "Victoria",
+    "country": "Canada",
+    "region": "alaska",
+    "lat": 48.42,
+    "lon": -123.37,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Butchart Gardens", "kind": "nature" },
+      { "name": "Inner Harbour & Parliament", "kind": "scenic" },
+      { "name": "Royal BC Museum", "kind": "culture" },
+      { "name": "Craigdarroch Castle", "kind": "historic" },
+      { "name": "Afternoon tea at the Empress", "kind": "food" }
+    ]
+  },
+  {
+    "id": "copenhagen",
+    "name": "Copenhagen",
+    "country": "Denmark",
+    "region": "northern-europe",
+    "lat": 55.68,
+    "lon": 12.6,
+    "sizeTier": 4,
+    "attractions": [
+      { "name": "Nyhavn harbor", "kind": "scenic" },
+      { "name": "Tivoli Gardens", "kind": "family" },
+      { "name": "The Little Mermaid statue", "kind": "scenic" },
+      { "name": "Rosenborg Castle", "kind": "historic" },
+      { "name": "Strøget shopping street", "kind": "culture" },
+      { "name": "Canal boat tour", "kind": "scenic" }
+    ]
+  },
+  {
+    "id": "oslo",
+    "name": "Oslo",
+    "country": "Norway",
+    "region": "northern-europe",
+    "lat": 59.91,
+    "lon": 10.75,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "Museum of the Viking Age", "kind": "historic" },
+      { "name": "Vigeland Sculpture Park", "kind": "culture" },
+      { "name": "Opera House roof walk", "kind": "scenic" },
+      { "name": "Akershus Fortress", "kind": "historic" },
+      { "name": "Bygdøy museum peninsula", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "stockholm",
+    "name": "Stockholm",
+    "country": "Sweden",
+    "region": "northern-europe",
+    "lat": 59.33,
+    "lon": 18.07,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "Vasa Museum", "kind": "historic" },
+      { "name": "Gamla Stan old town", "kind": "culture" },
+      { "name": "Skansen open-air museum", "kind": "family" },
+      { "name": "Royal Palace", "kind": "historic" },
+      { "name": "Archipelago boat tour", "kind": "scenic" }
+    ]
+  },
+  {
+    "id": "helsinki",
+    "name": "Helsinki",
+    "country": "Finland",
+    "region": "northern-europe",
+    "lat": 60.17,
+    "lon": 24.95,
+    "sizeTier": 3,
+    "attractions": [
+      { "name": "Suomenlinna sea fortress", "kind": "historic" },
+      { "name": "Helsinki Cathedral", "kind": "historic" },
+      { "name": "Temppeliaukio Rock Church", "kind": "culture" },
+      { "name": "Market Square", "kind": "food" },
+      { "name": "Design District", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "tallinn",
+    "name": "Tallinn",
+    "country": "Estonia",
+    "region": "northern-europe",
+    "lat": 59.44,
+    "lon": 24.75,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Old Town & Town Hall Square", "kind": "historic" },
+      { "name": "Toompea Castle", "kind": "historic" },
+      { "name": "Alexander Nevsky Cathedral", "kind": "historic" },
+      { "name": "Kadriorg Palace", "kind": "culture" },
+      { "name": "Telliskivi Creative City", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "bergen",
+    "name": "Bergen",
+    "country": "Norway",
+    "region": "northern-europe",
+    "lat": 60.39,
+    "lon": 5.32,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Bryggen wharf", "kind": "historic" },
+      { "name": "Fløibanen funicular", "kind": "scenic" },
+      { "name": "Bergen fish market", "kind": "food" },
+      { "name": "Mount Ulriken cable car", "kind": "adventure" },
+      { "name": "Troldhaugen (Grieg's home)", "kind": "culture" }
+    ]
+  },
+  {
+    "id": "geiranger",
+    "name": "Geiranger",
+    "country": "Norway",
+    "region": "northern-europe",
+    "lat": 62.1,
+    "lon": 7.21,
+    "sizeTier": 1,
+    "attractions": [
+      { "name": "Geirangerfjord", "kind": "scenic" },
+      { "name": "Seven Sisters waterfall", "kind": "nature" },
+      { "name": "Dalsnibba viewpoint", "kind": "scenic" },
+      { "name": "Eagle Road hairpins", "kind": "scenic" },
+      { "name": "Fjord kayaking", "kind": "adventure" }
+    ]
+  },
+  {
+    "id": "reykjavik",
+    "name": "Reykjavík",
+    "country": "Iceland",
+    "region": "northern-europe",
+    "lat": 64.15,
+    "lon": -21.94,
+    "sizeTier": 2,
+    "attractions": [
+      { "name": "Blue Lagoon", "kind": "nature" },
+      { "name": "Golden Circle (Geysir & Gullfoss)", "kind": "nature" },
+      { "name": "Hallgrímskirkja church", "kind": "historic" },
+      { "name": "Whale watching from the old harbor", "kind": "nature" },
+      { "name": "Harpa concert hall", "kind": "culture" },
+      { "name": "Sky Lagoon", "kind": "scenic" }
+    ]
+  }
+]
