@@ -12,7 +12,7 @@ import { buildGlobeTexture } from './mapTexture';
 const DEG = Math.PI / 180;
 const PIN_COLOR = 0xff7f66; // coral
 const PIN_ROUTE_COLOR = 0x7fd8c8; // seafoam
-const ARC_COLOR = 0xf5e9d4; // cream
+const ARC_COLOR = 0xffb39e; // warm coral-cream
 const SHIP_COLOR = 0xfff7ec;
 
 export interface GlobeCallbacks {
@@ -46,7 +46,6 @@ export class GlobeScene {
   private pointer = new THREE.Vector2();
   private pointerDown: { x: number; y: number } | null = null;
   private hoveredPortId: string | null = null;
-  private routePortIds: string[] = [];
 
   constructor(
     private container: HTMLElement,
@@ -133,7 +132,11 @@ export class GlobeScene {
 
   /** Redraw route arcs and pin highlights. Call whenever the route changes. */
   setRoute(routePortIds: string[]): void {
-    this.routePortIds = [...routePortIds];
+    for (const child of this.routeGroup.children) {
+      const mesh = child as THREE.Mesh;
+      mesh.geometry.dispose();
+      (mesh.material as THREE.Material).dispose();
+    }
     this.routeGroup.clear();
 
     for (const [portId, pin] of this.pinByPortId) {
@@ -152,19 +155,20 @@ export class GlobeScene {
     }
   }
 
-  private buildArc(from: LatLon, to: LatLon, dim: boolean): THREE.Line {
+  // Tubes, not lines: WebGL lines are always 1px, too faint over the ocean.
+  private buildArc(from: LatLon, to: LatLon, dim: boolean): THREE.Mesh {
     const nm = haversineNm(from, to);
     const lift = 0.012 + Math.min(0.09, (nm / 6000) * 0.12);
     const pts = greatCirclePoints(from, to, 48).map((p, i, arr) => {
       const t = i / (arr.length - 1);
       return latLonToVec3(p.lat, p.lon, 1.01 + Math.sin(t * Math.PI) * lift);
     });
-    return new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(pts),
-      new THREE.LineBasicMaterial({
+    return new THREE.Mesh(
+      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 64, 0.0035, 6),
+      new THREE.MeshBasicMaterial({
         color: ARC_COLOR,
         transparent: true,
-        opacity: dim ? 0.35 : 0.85,
+        opacity: dim ? 0.4 : 0.95,
       }),
     );
   }
