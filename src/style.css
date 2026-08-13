@@ -377,6 +377,17 @@ button:active {
   font-variant-numeric: tabular-nums;
 }
 
+.palette-item .pi-zone {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--seafoam);
+  opacity: 0.85;
+}
+
+.palette-item.selected .pi-zone {
+  color: var(--navy);
+}
+
 .palette-item.selected {
   background: var(--seafoam);
   border-color: var(--seafoam);

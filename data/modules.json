@@ -9,6 +9,8 @@
     "upkeepPerDay": 15,
     "capacity": 2,
     "placement": "any",
+    "zones": ["cabins"],
+    "view": "inside",
     "appealTags": ["budget"]
   },
   {
@@ -21,7 +23,23 @@
     "upkeepPerDay": 20,
     "capacity": 2,
     "placement": "any",
+    "zones": ["cabins"],
+    "view": "oceanview",
     "appealTags": ["comfort"]
+  },
+  {
+    "id": "cabin-balcony",
+    "name": "Balcony Cabin",
+    "category": "cabin",
+    "w": 1,
+    "h": 1,
+    "cost": 18000,
+    "upkeepPerDay": 30,
+    "capacity": 2,
+    "placement": "any",
+    "zones": ["cabins"],
+    "view": "balcony",
+    "appealTags": ["comfort", "luxury"]
   },
   {
     "id": "cabin-suite",
@@ -33,11 +51,13 @@
     "upkeepPerDay": 45,
     "capacity": 3,
     "placement": "any",
+    "zones": ["cabins"],
+    "view": "balcony",
     "appealTags": ["luxury", "quiet"]
   },
   {
     "id": "buffet",
-    "name": "Buffet Hall",
+    "name": "Lido Buffet",
     "category": "dining",
     "w": 3,
     "h": 1,
@@ -45,6 +65,7 @@
     "upkeepPerDay": 900,
     "capacity": 60,
     "placement": "any",
+    "zones": ["top"],
     "appealTags": ["family", "variety"]
   },
   {
@@ -57,6 +78,7 @@
     "upkeepPerDay": 950,
     "capacity": 30,
     "placement": "any",
+    "zones": ["venues"],
     "appealTags": ["luxury", "date-night"]
   },
   {
@@ -69,6 +91,7 @@
     "upkeepPerDay": 500,
     "capacity": 20,
     "placement": "any",
+    "zones": ["top", "venues"],
     "appealTags": ["party", "night"]
   },
   {
@@ -81,6 +104,7 @@
     "upkeepPerDay": 600,
     "capacity": 40,
     "placement": "top",
+    "zones": ["top"],
     "appealTags": ["family", "outdoor", "party"]
   },
   {
@@ -93,6 +117,7 @@
     "upkeepPerDay": 1200,
     "capacity": 120,
     "placement": "any",
+    "zones": ["venues"],
     "appealTags": ["culture", "family", "night"]
   },
   {
@@ -105,6 +130,7 @@
     "upkeepPerDay": 1000,
     "capacity": 50,
     "placement": "any",
+    "zones": ["venues"],
     "appealTags": ["party", "luxury", "night"]
   },
   {
@@ -117,6 +143,7 @@
     "upkeepPerDay": 300,
     "capacity": 25,
     "placement": "any",
+    "zones": ["top"],
     "appealTags": ["healthy", "morning"]
   },
   {
@@ -129,6 +156,7 @@
     "upkeepPerDay": 400,
     "capacity": 30,
     "placement": "any",
+    "zones": ["top", "cabins"],
     "appealTags": ["family"]
   },
   {
@@ -141,6 +169,7 @@
     "upkeepPerDay": 200,
     "capacity": 20,
     "placement": "any",
+    "zones": ["service"],
     "appealTags": []
   },
   {
@@ -153,6 +182,8 @@
     "upkeepPerDay": 800,
     "capacity": 0,
     "placement": "bottom",
+    "zones": ["venues", "service"],
+    "hullEnd": "aft",
     "appealTags": []
   },
   {
@@ -165,6 +196,8 @@
     "upkeepPerDay": 300,
     "capacity": 0,
     "placement": "top",
+    "zones": ["top"],
+    "hullEnd": "forward",
     "appealTags": []
   }
 ]

@@ -35,6 +35,10 @@ export interface PlacedModule {
 export interface ShipLayout {
   decks: number;
   cols: number;
+  /** Zone band per deck, index 0 = top deck (see DECK_ZONES). */
+  zones: import('./constants').DeckZone[];
+  /** Elevator core columns spanning all decks; unbuildable. */
+  elevatorCols: number[];
   nextId: number;
   placed: PlacedModule[];
 }
@@ -48,7 +52,7 @@ export interface ShipState {
 
 /** The one serializable object that fully describes a game in progress. */
 export interface GameState {
-  version: 2;
+  version: 3;
   /** Sim hours elapsed since EPOCH_ISO. */
   tick: number;
   speed: SpeedSetting;

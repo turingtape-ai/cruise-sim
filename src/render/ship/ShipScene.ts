@@ -37,11 +37,26 @@ export interface ShipSceneCallbacks {
   onModuleTap(placedId: number): void;
 }
 
+const ZONE_TINTS: Record<string, number> = {
+  top: 0x7fd8c8,
+  cabins: 0x8fb8de,
+  venues: 0xc98bdb,
+  service: 0x8d99ae,
+};
+
+const ZONE_SHORT: Record<string, string> = {
+  top: 'LIDO',
+  cabins: 'CABINS',
+  venues: 'VENUES',
+  service: 'SERVICE',
+};
+
 export class ShipScene {
   private app!: Application;
   private world = new Container();
   private hullLayer = new Graphics();
   private gridLayer = new Graphics();
+  private decorLayer = new Container();
   private moduleLayer = new Container();
   private ghostLayer = new Graphics();
   private layout: ShipLayout | null = null;
@@ -69,7 +84,13 @@ export class ShipScene {
       resizeTo: container,
     });
     container.appendChild(scene.app.canvas);
-    scene.world.addChild(scene.hullLayer, scene.gridLayer, scene.moduleLayer, scene.ghostLayer);
+    scene.world.addChild(
+      scene.hullLayer,
+      scene.gridLayer,
+      scene.decorLayer,
+      scene.moduleLayer,
+      scene.ghostLayer,
+    );
     scene.app.stage.addChild(scene.world);
     scene.app.stage.eventMode = 'static';
     scene.app.stage.hitArea = { contains: () => true };
@@ -96,6 +117,7 @@ export class ShipScene {
     this.layout = layout;
     this.drawHull();
     this.drawGrid();
+    this.drawDecor();
     this.drawModules();
     this.drawGhost();
     this.fit();
@@ -145,14 +167,81 @@ export class ShipScene {
     const g = this.gridLayer;
     g.clear();
     if (!this.layout) return;
+    const w = this.gridWidth();
     for (let d = 0; d < this.layout.decks; d++) {
+      const zone = this.layout.zones[d] ?? 'cabins';
+      const { py } = this.cellPos(d, 0);
+      // Zone band tint behind the whole deck.
+      g.rect(0, py, w, CELL).fill({ color: ZONE_TINTS[zone] ?? 0xffffff, alpha: 0.05 });
       for (let c = 0; c < this.layout.cols; c++) {
-        const { px, py } = this.cellPos(d, c);
+        const { px } = this.cellPos(d, c);
         g.roundRect(px + 1, py + 1, CELL - 2, CELL - 2, 4).stroke({
           width: 1,
           color: 0xf5e9d4,
           alpha: 0.1,
         });
+      }
+      // Walkways: cabin decks run two parallel corridors (port/starboard in
+      // real plans); other passenger decks a single promenade.
+      if (zone === 'cabins') {
+        g.rect(1, py + CELL * 0.3, w - 2, 1.5).fill({ color: 0xf5e9d4, alpha: 0.14 });
+        g.rect(1, py + CELL * 0.66, w - 2, 1.5).fill({ color: 0xf5e9d4, alpha: 0.14 });
+      } else if (zone !== 'service') {
+        g.rect(1, py + CELL * 0.82, w - 2, 1.5).fill({ color: 0xf5e9d4, alpha: 0.1 });
+      }
+    }
+  }
+
+  /** Elevator cores (fore/mid/aft) and zone labels; rebuilt with the layout. */
+  private drawDecor(): void {
+    this.decorLayer.removeChildren().forEach((c) => c.destroy({ children: true }));
+    if (!this.layout) return;
+    const h = this.gridHeight();
+    const cores = new Graphics();
+    for (const col of this.layout.elevatorCols) {
+      const px = col * CELL;
+      cores
+        .roundRect(px + 2, -6, CELL - 4, h + 12, 5)
+        .fill({ color: 0x0b1d33, alpha: 0.85 })
+        .stroke({ width: 1.5, color: 0xf5e9d4, alpha: 0.25 });
+      for (let d = 0; d < this.layout.decks; d++) {
+        const { py } = this.cellPos(d, col);
+        cores.roundRect(px + CELL * 0.28, py + CELL * 0.22, CELL * 0.44, CELL * 0.56, 3).stroke({
+          width: 1.2,
+          color: 0x7fd8c8,
+          alpha: 0.55,
+        });
+      }
+      const lift = new Text({
+        text: '🛗',
+        style: { fontSize: 12, fontFamily: 'system-ui, sans-serif' },
+      });
+      lift.anchor.set(0.5);
+      lift.position.set(px + CELL / 2, -14);
+      this.decorLayer.addChild(lift);
+    }
+    this.decorLayer.addChild(cores);
+    // One rotated label per zone band, centered on the band's full height.
+    let bandStart = 0;
+    for (let d = 1; d <= this.layout.decks; d++) {
+      if (d === this.layout.decks || this.layout.zones[d] !== this.layout.zones[bandStart]) {
+        const zone = this.layout.zones[bandStart] ?? '';
+        const label = new Text({
+          text: ZONE_SHORT[zone] ?? zone.toUpperCase(),
+          style: {
+            fontSize: 9,
+            fontWeight: '800',
+            fill: ZONE_TINTS[zone] ?? 0xf5e9d4,
+            fontFamily: 'system-ui, sans-serif',
+            letterSpacing: 1.5,
+          },
+        });
+        const yMid = (this.cellPos(bandStart, 0).py + this.cellPos(d - 1, 0).py + CELL) / 2;
+        label.anchor.set(0.5, 0.5);
+        label.position.set(-HULL_PAD + 12, yMid);
+        label.angle = -90;
+        this.decorLayer.addChild(label);
+        bandStart = d;
       }
     }
   }
@@ -180,7 +269,10 @@ export class ShipScene {
             : CATEGORY_ICONS[module.category],
         style: {
           fontFamily: 'system-ui, sans-serif',
-          fontSize: module.w >= 2 ? 11 : 14,
+          // Single-deck-tall wide tiles get a smaller face so two wrapped
+          // lines still fit inside the tile.
+          fontSize: module.w >= 2 ? (module.h === 1 ? 10 : 11) : 14,
+          lineHeight: module.h === 1 ? 11 : 13,
           fontWeight: '700',
           fill: 0x0b1d33,
           wordWrap: true,

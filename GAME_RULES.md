@@ -53,7 +53,10 @@ Single source of truth for tunables. Mirror of `src/sim/constants.ts` — keep i
 | `PORT_STAY_HOURS`                   | 10                       | sim hours                 | Default dock time per Port call.                                                                                                |
 | `PORT_FEE_BY_TIER`                  | 500 / 1200 / 2500 / 5000 | $                         | Indexed by port size tier 1–4. Charged on arrival. _(Phase 5 — documented now, charged from Phase 1 at 0×; see Open Questions)_ |
 | `STARTING_MONEY`                    | 500000                   | $                         | New game bankroll.                                                                                                              |
-| `SHIP_GRID.coastal`                 | 5 decks × 24 cols        | cells                     | Deck-editor grid per class; panamax 7×32, grande 9×40 _(locked)_.                                                               |
+| `SHIP_GRID.coastal`                 | 6 decks × 24 cols        | cells                     | Deck-editor grid per class; panamax 8×32, grande 10×40 _(locked)_.                                                              |
+| `DECK_ZONES.coastal`                | top/cab/cab/ven/ven/svc  | zone per deck             | Vertical zoning bands, §4.1c. Per-class tables in `constants.ts`.                                                               |
+| `ELEVATOR_COLS.coastal`             | 5 / 12 / 19              | columns                   | Fore/mid/aft elevator cores spanning all decks; unbuildable.                                                                    |
+| `HULL_END_FRACTION`                 | 1/3                      | —                         | Bow/stern band width for `hullEnd` modules (bridge forward, engine aft).                                                        |
 | `MODULE_SELL_REFUND`                | 0.5                      | —                         | Fraction of module cost refunded on sale.                                                                                       |
 | `SEA_GRID_DEG`                      | 0.5                      | degrees                   | Ocean-grid resolution for sea routing (§4.1).                                                                                   |
 | `SEA_SNAP_MAX_CELLS`                | 4                        | cells                     | Max distance a coastal port snaps to open water.                                                                                |
@@ -105,6 +108,27 @@ Buying a module charges its full `cost` immediately; selling refunds
 `cost × MODULE_SELL_REFUND`. Placement rules: modules must fit the `SHIP_GRID` for the ship's
 class, may not overlap, and `placement: "top"` modules (pool, bridge) must sit on the top deck
 while `"bottom"` modules (engine) must touch the keel.
+
+### 4.1c Deck zoning (Phase 2.5 — live)
+
+Grounded in how real cruise ships are arranged (researched against published deck plans:
+public venues on decks ~3–5, cabins ~6–10, Lido/pool/buffet/spa ~9–15, bridge upper-forward,
+crew below passengers, machinery lowest and aft, elevator banks forward/midship/aft, cabin
+decks running two parallel port/starboard corridors):
+
+- Every deck belongs to a **zone band** (`DECK_ZONES`, top → bottom): `top` (Lido & open
+  decks), `cabins` (mid accommodation decks), `venues` (lower entertainment/dining decks),
+  `service` (crew & machinery). A module may only occupy decks whose zone is in its `zones`
+  list; multi-deck modules must satisfy every deck they span.
+- **Elevator cores** (`ELEVATOR_COLS`) run fore/mid/aft through all decks and are
+  unbuildable. Cabin decks render twin corridors; passenger circulation becomes functional
+  in Phase 3.
+- **Hull ends**: `hullEnd: "forward"` modules (bridge) must sit fully in the bow third,
+  `"aft"` (engine) in the stern third (`HULL_END_FRACTION`).
+- **Cabin windows**: `view: "oceanview" | "balcony"` cabins need hull windows, so they may
+  not sit in columns adjacent to an elevator core; `balcony` cabins are restricted to the
+  highest cabin deck. `inside` cabins go anywhere in the cabin band. (The side cutaway
+  cannot show port/starboard, so core-adjacency stands in for "interior" berths.)
 
 ### 4.2 Satisfaction score (Phase 3/5 — designed)
 
@@ -195,6 +219,9 @@ Each entry: `id` (unique), `name`, plus:
 | `upkeepPerDay` | number ($/day)                                                                 | Continuous drain, §4.1b.                                    |
 | `capacity`     | int                                                                            | Guests served (cabins → passenger capacity; crew → berths). |
 | `placement`    | `any \| top \| bottom`                                                         | Deck restriction.                                           |
+| `zones`        | array of `top \| cabins \| venues \| service`                                  | Zone bands the module may occupy (§4.1c).                   |
+| `hullEnd`      | `forward \| aft` (optional)                                                    | Bow/stern restriction (bridge forward, engine aft).         |
+| `view`         | `inside \| oceanview \| balcony` (optional, cabins)                            | Window class; drives hull-window rules (§4.1c).             |
 | `appealTags`   | string[]                                                                       | Matched against archetype preferences (Phase 3).            |
 
 ## 6. Phase checklist

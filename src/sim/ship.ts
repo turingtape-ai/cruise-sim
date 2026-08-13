@@ -3,7 +3,13 @@
 
 import type { PlacedModule, ShipLayout } from './types';
 import type { ShipModule } from './data/schemas';
-import { SHIP_GRID, type ShipClass } from './constants';
+import {
+  DECK_ZONES,
+  ELEVATOR_COLS,
+  HULL_END_FRACTION,
+  SHIP_GRID,
+  type ShipClass,
+} from './constants';
 
 export type PlacementResult = { ok: true } | { ok: false; reason: string };
 
@@ -32,6 +38,21 @@ function occupancy(layout: ShipLayout, modulesById: Map<string, ShipModule>): Se
   return occupied;
 }
 
+const ZONE_LABELS: Record<string, string> = {
+  top: 'the top decks',
+  cabins: 'the mid (cabin) decks',
+  venues: 'the lower venue decks',
+  service: 'the service decks below',
+};
+
+/** The bow sits at high x (drawn right), the stern at low x. */
+function inHullEnd(layout: ShipLayout, cols: number[], end: 'forward' | 'aft'): boolean {
+  const band = Math.floor(layout.cols * HULL_END_FRACTION);
+  return end === 'forward'
+    ? cols.every((c) => c >= layout.cols - band)
+    : cols.every((c) => c < band);
+}
+
 export function canPlace(
   layout: ShipLayout,
   modulesById: Map<string, ShipModule>,
@@ -42,14 +63,57 @@ export function canPlace(
   if (deck < 0 || x < 0 || deck + module.h > layout.decks || x + module.w > layout.cols) {
     return { ok: false, reason: 'Outside the hull' };
   }
+
+  const cells = moduleCells(module, deck, x);
+  const columns = [...new Set(cells.map((c) => c.x))];
+
+  // Elevator cores span every deck and are unbuildable.
+  if (columns.some((c) => layout.elevatorCols.includes(c))) {
+    return { ok: false, reason: 'Blocked by an elevator core' };
+  }
+
+  // Vertical zoning: every occupied deck must be in one of the module's bands.
+  for (let d = deck; d < deck + module.h; d++) {
+    const zone = layout.zones[d];
+    if (zone && !module.zones.includes(zone)) {
+      const wanted = module.zones.map((z) => ZONE_LABELS[z] ?? z).join(' or ');
+      return { ok: false, reason: `${module.name} belongs on ${wanted}` };
+    }
+  }
+
   if (module.placement === 'top' && deck !== 0) {
     return { ok: false, reason: `${module.name} must be on the top deck` };
   }
   if (module.placement === 'bottom' && deck + module.h !== layout.decks) {
     return { ok: false, reason: `${module.name} must sit on the lowest deck` };
   }
+  if (module.hullEnd && !inHullEnd(layout, columns, module.hullEnd)) {
+    return {
+      ok: false,
+      reason: `${module.name} belongs ${module.hullEnd === 'forward' ? 'at the bow' : 'aft, by the stern'}`,
+    };
+  }
+
+  // Window rules: oceanview/balcony cabins need hull windows, so they cannot
+  // sit against an elevator core (interior structure). Balconies only on the
+  // uppermost cabin deck, closest to the open air.
+  if (module.view === 'oceanview' || module.view === 'balcony') {
+    if (columns.some((c) => layout.elevatorCols.some((e) => Math.abs(e - c) === 1))) {
+      return {
+        ok: false,
+        reason: `${module.name} needs hull windows — not against an elevator core`,
+      };
+    }
+  }
+  if (module.view === 'balcony') {
+    const topCabinDeck = layout.zones.indexOf('cabins');
+    if (topCabinDeck !== -1 && deck !== topCabinDeck) {
+      return { ok: false, reason: `${module.name} goes on the highest cabin deck` };
+    }
+  }
+
   const occupied = occupancy(layout, modulesById);
-  for (const cell of moduleCells(module, deck, x)) {
+  for (const cell of cells) {
     if (occupied.has(cell.deck * layout.cols + cell.x)) {
       return { ok: false, reason: 'Overlaps another room' };
     }
@@ -118,22 +182,41 @@ export function layoutStats(layout: ShipLayout, modulesById: Map<string, ShipMod
 }
 
 /**
- * The commissioned starting ship: bridge, engine, crew quarters, a buffet,
- * a bar, and four cabins. Positions are known-good for the coastal 5×24 grid
- * (asserted by tests against the real module catalog).
+ * The commissioned starting ship, laid out like a real one: bridge top-forward,
+ * Lido buffet on the top deck, cabins mid-ship, a bar on the venue decks, and
+ * crew + engine below aft. Positions are known-good for the coastal 6×24 grid
+ * with elevator cores at 5/12/19 (asserted by tests against the real catalog).
  */
 export function starterLayout(shipClass: ShipClass = 'coastal'): ShipLayout {
   const { decks, cols } = SHIP_GRID[shipClass];
   const placed: PlacedModule[] = [
-    { id: 1, moduleId: 'bridge', deck: 0, x: 0 },
-    { id: 2, moduleId: 'buffet', deck: 1, x: 2 },
-    { id: 3, moduleId: 'bar', deck: 1, x: 6 },
-    { id: 4, moduleId: 'cabin-oceanview', deck: 2, x: 2 },
-    { id: 5, moduleId: 'cabin-oceanview', deck: 2, x: 3 },
-    { id: 6, moduleId: 'cabin-inside', deck: 3, x: 2 },
-    { id: 7, moduleId: 'cabin-inside', deck: 3, x: 3 },
-    { id: 8, moduleId: 'crew-quarters', deck: 3, x: 8 },
-    { id: 9, moduleId: 'engine', deck: decks - 2, x: 18 },
+    { id: 1, moduleId: 'bridge', deck: 0, x: 20 },
+    { id: 2, moduleId: 'buffet', deck: 0, x: 13 },
+    { id: 3, moduleId: 'cabin-oceanview', deck: 1, x: 2 },
+    { id: 4, moduleId: 'cabin-oceanview', deck: 1, x: 3 },
+    { id: 5, moduleId: 'cabin-inside', deck: 2, x: 6 },
+    { id: 6, moduleId: 'cabin-inside', deck: 2, x: 7 },
+    { id: 7, moduleId: 'bar', deck: 3, x: 6 },
+    { id: 8, moduleId: 'engine', deck: decks - 2, x: 1 },
+    { id: 9, moduleId: 'crew-quarters', deck: decks - 1, x: 6 },
   ];
-  return { decks, cols, nextId: 10, placed };
+  return {
+    decks,
+    cols,
+    zones: [...DECK_ZONES[shipClass]],
+    elevatorCols: [...ELEVATOR_COLS[shipClass]],
+    nextId: 10,
+    placed,
+  };
 }
+
+/** Module-id multiset of the v2 starter ship, used by the v2→v3 save migration. */
+export const V2_STARTER_MODULE_COUNTS: Record<string, number> = {
+  bridge: 1,
+  buffet: 1,
+  bar: 1,
+  'cabin-oceanview': 2,
+  'cabin-inside': 2,
+  'crew-quarters': 1,
+  engine: 1,
+};
