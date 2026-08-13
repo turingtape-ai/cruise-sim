@@ -118,8 +118,29 @@ export const CrewFileSchema = z.object({
   lastNames: z.array(z.string().min(1)).min(10),
 });
 
+export const ShipEventSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  /** Module id the event needs aboard (e.g. "theater"). Cross-checked at load. */
+  venue: z.string().min(1),
+  durationHours: z.number().positive(),
+  costPerRun: z.number().nonnegative(),
+  /** Need deltas applied to guests when the event runs (may be negative). */
+  boosts: z.record(z.enum(['food', 'fun', 'rest', 'novelty']), z.number()),
+  /** Matched against archetype preferred tags for extra effect. */
+  tags: z.array(z.string().min(1)),
+});
+
+export const EventsFileSchema = z.array(ShipEventSchema);
+
 export type ModuleCategory = z.infer<typeof ModuleCategorySchema>;
 export type ShipModule = z.infer<typeof ModuleSchema>;
 export type DeckZone = z.infer<typeof DeckZoneSchema>;
 export type CrewRole = z.infer<typeof CrewRoleSchema>;
 export type CrewData = z.infer<typeof CrewFileSchema>;
+export type ShipEvent = z.infer<typeof ShipEventSchema>;
+
+/** A dining venue theme with the kind of module it can be assigned to. */
+export type DiningTheme = (Buffet | Restaurant | Bar) & {
+  kind: 'buffet' | 'restaurant' | 'bar';
+};

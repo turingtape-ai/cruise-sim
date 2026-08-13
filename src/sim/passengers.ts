@@ -93,7 +93,7 @@ function isNight(tick: number): boolean {
 export function stepNeeds(
   cruise: CruiseState,
   tick: number,
-  capacity: Record<NeedKind, number>,
+  capacityFor: (archetype: Archetype) => Record<NeedKind, number>,
   crew: CrewMember[],
   rolesById: Map<string, CrewRole>,
 ): void {
@@ -105,6 +105,7 @@ export function stepNeeds(
   };
   for (const group of cruise.groups) {
     const weights = ARCHETYPE_NEED_WEIGHTS[group.archetype];
+    const capacity = capacityFor(group.archetype);
     for (const need of NEEDS) {
       let value = group.needs[need] - NEED_DECAY_PER_TICK[need] * weights[need];
       if (need !== 'novelty') {

@@ -45,29 +45,29 @@ describe('stepNeeds', () => {
   it('needs fall without any service and rise with strong service', () => {
     const starved = startCruise(0, 'miami', 8);
     const zeroCap = { food: 0, fun: 0, rest: 0, novelty: 0 };
-    for (let t = 1; t <= 24; t++) stepNeeds(starved, t, zeroCap, [], crewRolesById);
+    for (let t = 1; t <= 24; t++) stepNeeds(starved, t, () => zeroCap, [], crewRolesById);
     const g = starved.groups[0]!;
     expect(g.needs.food).toBeLessThan(NEED_START - 30);
 
     const served = startCruise(0, 'miami', 8);
     const bigCap = { food: 100, fun: 100, rest: 100, novelty: 0 };
     const eliteCrew = starterCrew().map((c) => ({ ...c, skill: 5, morale: 100 }));
-    for (let t = 1; t <= 24; t++) stepNeeds(served, t, bigCap, eliteCrew, crewRolesById);
+    for (let t = 1; t <= 24; t++) stepNeeds(served, t, () => bigCap, eliteCrew, crewRolesById);
     expect(served.groups[0]!.needs.food).toBeGreaterThan(starved.groups[0]!.needs.food + 20);
   });
 
   it('novelty decays at sea and never regenerates from service', () => {
     const cruise = startCruise(0, 'miami', 10);
     const cap = { food: 100, fun: 100, rest: 100, novelty: 100 };
-    for (let t = 1; t <= 48; t++) stepNeeds(cruise, t, cap, starterCrew(), crewRolesById);
+    for (let t = 1; t <= 48; t++) stepNeeds(cruise, t, () => cap, starterCrew(), crewRolesById);
     expect(cruise.groups[0]!.needs.novelty).toBeLessThan(NEED_START);
   });
 
   it('accumulates need totals for cruise averages', () => {
     const cruise = startCruise(0, 'miami', 10);
     const cap = { food: 0, fun: 0, rest: 0, novelty: 0 };
-    stepNeeds(cruise, 1, cap, [], crewRolesById);
-    stepNeeds(cruise, 2, cap, [], crewRolesById);
+    stepNeeds(cruise, 1, () => cap, [], crewRolesById);
+    stepNeeds(cruise, 2, () => cap, [], crewRolesById);
     expect(cruise.ticks).toBe(2);
     expect(cruise.groups[0]!.needTotals.food).toBeGreaterThan(0);
   });

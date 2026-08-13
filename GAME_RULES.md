@@ -79,6 +79,15 @@ Single source of truth for tunables. Mirror of `src/sim/constants.ts` — keep i
 | `CREW_STARTING_MORALE`              | 85                       | pts                       | Morale for new hires.                                                                                                           |
 | `ARCHETYPE_MIX`                     | 30/20/20/15/15 %         | —                         | families/retirees/party/luxury/adventurers cohort split.                                                                        |
 | `FARE_PER_NIGHT`                    | 180                      | $ / guest-night           | PLACEHOLDER fare until Phase 5 demand (§4.4).                                                                                   |
+| `THEME_APPEAL_FACTOR`               | 0.5                      | —                         | Themed venue service ×(1 + factor × appeal/10).                                                                                 |
+| `TAG_MATCH_BONUS` / `TAG_MATCH_CAP` | 0.15 / 2                 | —                         | Affinity bonus per preferred-tag match, capped.                                                                                 |
+| `ARCHETYPE_PREFERRED_TAGS`          | see `constants.ts`       | —                         | Tags each archetype gravitates toward.                                                                                          |
+| `EXCURSION_PARTICIPATION_BASE`      | 0.6                      | —                         | Share of guests interested before affinity & capacity.                                                                          |
+| `EXCURSION_CUT`                     | 0.2                      | —                         | The line's share of excursion ticket revenue.                                                                                   |
+| `EXCURSION_FUN/NOVELTY_BOOST`       | 10 / 15                  | pts                       | Participant boosts, scaled by guide factor & affinity.                                                                          |
+| `GUIDE_FACTOR`                      | 0.6 + 0.5 × quality      | —                         | Excursion boost factor from the best guide (quality cap 1.6).                                                                   |
+| `EVENT_HOUR`                        | 20:00                    | sim hour                  | Evening program runs daily while guests are aboard.                                                                             |
+| `EVENT_QUALITY_FACTOR`              | 0.6 + 0.4 × quality      | —                         | Event boost factor from entertainer quality.                                                                                    |
 | `PRICE_ELASTICITY`                  | −1.4                     | —                         | Exponent in demand curve §4.4. _(Phase 5)_                                                                                      |
 | `SATISFACTION_TO_STARS`             | see §4.2                 | —                         | Piecewise mapping. _(Phase 5)_                                                                                                  |
 | `REPUTATION_SMOOTHING`              | 0.2                      | —                         | EWMA weight for new cruise outcomes §4.3. _(Phase 5)_                                                                           |
@@ -169,6 +178,23 @@ call at each new port per cruise. Crew morale falls `CREW_MORALE_DECAY_PER_SAILI
 and recovers `CREW_MORALE_RECOVERY_PER_PORT_DAY` docked. Wages drain continuously. Departure
 requires engine + bridge + a captain. The best engineer aboard multiplies fuel cost by
 `1 − skill × ENGINEER_FUEL_SAVING_PER_SKILL`.
+
+### 4.2c Dining themes, excursions, events (Phase 4 — live)
+
+- **Themes**: a buffet/restaurant/bar module may carry one venue from `data/dining.json`
+  (kind must match). Effective service capacity for an archetype:
+  `capacity × (1 + THEME_APPEAL_FACTOR × appeal/10) × tagAffinity(theme.tags, archetype)`
+  where `tagAffinity = 1 + TAG_MATCH_BONUS × min(TAG_MATCH_CAP, matches)`. The theme's
+  `cost` adds to daily upkeep.
+- **Excursions**: every port call away from home runs the port's excursions. Per group,
+  interest = `count × EXCURSION_PARTICIPATION_BASE × tagAffinity`, scaled down to fit each
+  excursion's capacity. Participants gain fun/novelty boosts × guide factor
+  (`GUIDE_FACTOR.base + perQuality × best-guide quality`) × affinity; the line receives
+  `EXCURSION_CUT × ticket revenue`.
+- **Events**: the player enables a recurring program from `data/events.json`. Each enabled
+  event runs daily at `EVENT_HOUR` while guests are aboard if its venue module is placed,
+  charging `costPerRun` and applying its need boosts × entertainer quality factor ×
+  affinity (negative boosts, e.g. a deck party costing rest, apply unscaled).
 
 ### 4.3 Reputation update (Phase 3 — live)
 
@@ -267,13 +293,25 @@ Each entry: `id` (unique), `name`, plus:
 | `roles[].wagePerDay`   | number ($)                               | Base wage before the skill multiplier.                  |
 | `firstNames/lastNames` | string[]                                 | Name pools for generated candidates.                    |
 
+### 5.6 `data/events.json` — array of Event
+
+| Field           | Type                   | Meaning                                            |
+| --------------- | ---------------------- | -------------------------------------------------- |
+| `id`            | string (unique)        | Referenced by the player's event program.          |
+| `name`          | string                 | Display name.                                      |
+| `venue`         | string (module id)     | Module that must be aboard; cross-checked at load. |
+| `durationHours` | number                 | Flavor for now; scheduling granularity is daily.   |
+| `costPerRun`    | number ($)             | Charged each night the event runs.                 |
+| `boosts`        | record of need → delta | Applied to guests (may be negative).               |
+| `tags`          | string[]               | Matched against archetype preferred tags.          |
+
 ## 6. Phase checklist
 
 - [x] **Phase 0 — Foundations**: scaffold (Vite/TS/Pixi/Three, ESLint/Prettier, Vitest, Pages CI); GAME_RULES.md + ARCHITECTURE.md; GameState + tick clock + save/load; `/data` JSON files with zod validation.
 - [x] **Phase 1 — Globe & routes**: interactive globe (spin/zoom/pins/hover cards); route planner with arcs and distance/day estimates; ship dot sailing the route with arrival/departure log; HUD (money, date, speed, route).
 - [x] **Phase 2 — Ship builder**: grid deck editor, room modules (Pixi).
 - [x] **Phase 3 — Crew & passengers**: hiring, morale, archetypes, needs sim.
-- [ ] **Phase 4 — Dining, excursions, events**: menus, bookings, event scheduler.
+- [x] **Phase 4 — Dining, excursions, events**: menus, bookings, event scheduler.
 - [ ] **Phase 5 — Economy & reputation**: full revenue/cost model, demand, star gates.
 - [ ] **Phase 6 — Emergencies**: implement Incidents on the existing event bus.
 

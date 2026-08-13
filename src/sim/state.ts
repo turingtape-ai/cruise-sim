@@ -21,7 +21,7 @@ export function createNewGame(
   rngSeed: number = 1,
 ): GameState {
   return {
-    version: 4,
+    version: 5,
     tick: 0,
     speed: 0,
     money: STARTING_MONEY,
@@ -32,6 +32,7 @@ export function createNewGame(
     hiredCandidates: { week: 0, indices: [] },
     cruise: null,
     lastCruiseStars: null,
+    eventProgram: [],
     routePortIds: [],
     ship: {
       name: DEFAULT_SHIP_NAME,

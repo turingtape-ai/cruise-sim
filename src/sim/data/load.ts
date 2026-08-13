@@ -3,14 +3,25 @@ import diningJson from '../../../data/dining.json';
 import excursionsJson from '../../../data/excursions.json';
 import modulesJson from '../../../data/modules.json';
 import crewJson from '../../../data/crew.json';
+import eventsJson from '../../../data/events.json';
 import {
   PortsFileSchema,
   DiningFileSchema,
   ExcursionsFileSchema,
   ModulesFileSchema,
   CrewFileSchema,
+  EventsFileSchema,
 } from './schemas';
-import type { Port, Dining, Excursion, ShipModule, CrewData, CrewRole } from './schemas';
+import type {
+  Port,
+  Dining,
+  DiningTheme,
+  Excursion,
+  ShipModule,
+  CrewData,
+  CrewRole,
+  ShipEvent,
+} from './schemas';
 
 export interface GameData {
   ports: Port[];
@@ -22,6 +33,10 @@ export interface GameData {
   modulesById: Map<string, ShipModule>;
   crewData: CrewData;
   crewRolesById: Map<string, CrewRole>;
+  /** All dining venues flattened, tagged with the module kind they theme. */
+  diningThemesById: Map<string, DiningTheme>;
+  events: ShipEvent[];
+  eventsById: Map<string, ShipEvent>;
 }
 
 /**
@@ -66,6 +81,20 @@ export function loadGameData(): GameData {
   if (crewRolesById.size !== crewData.roles.length)
     throw new Error('crew.json: duplicate role ids');
 
+  const diningThemesById = new Map<string, DiningTheme>([
+    ...dining.buffets.map((v) => [v.id, { ...v, kind: 'buffet' as const }] as const),
+    ...dining.restaurants.map((v) => [v.id, { ...v, kind: 'restaurant' as const }] as const),
+    ...dining.bars.map((v) => [v.id, { ...v, kind: 'bar' as const }] as const),
+  ]);
+
+  const events = EventsFileSchema.parse(eventsJson);
+  const eventsById = new Map(events.map((e) => [e.id, e]));
+  if (eventsById.size !== events.length) throw new Error('events.json: duplicate event ids');
+  for (const e of events) {
+    if (!modulesById.has(e.venue))
+      throw new Error(`events.json: "${e.id}" needs unknown venue module "${e.venue}"`);
+  }
+
   return {
     ports,
     portsById,
@@ -76,5 +105,8 @@ export function loadGameData(): GameData {
     modulesById,
     crewData,
     crewRolesById,
+    diningThemesById,
+    events,
+    eventsById,
   };
 }

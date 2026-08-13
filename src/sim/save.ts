@@ -19,11 +19,14 @@ export function deserialize(raw: string): GameState | null {
     const parsed: unknown = JSON.parse(raw);
     if (typeof parsed !== 'object' || parsed === null) return null;
     const v = (parsed as { version?: unknown }).version;
-    // Migrations chain: v1 → (starter layout) → v3 shape → v4.
-    if (v === 1) return migrateV3toV4(grantStarterLayout(parsed as Record<string, unknown>));
-    if (v === 2) return migrateV3toV4(migrateV2toV3(parsed as Record<string, unknown>));
-    if (v === 3) return migrateV3toV4(parsed as unknown as GameState);
-    if (v !== 4) return null; // future versions: migrate here
+    // Migrations chain: v1 → (starter layout) → v3 shape → v4 → v5.
+    if (v === 1)
+      return migrateV4toV5(migrateV3toV4(grantStarterLayout(parsed as Record<string, unknown>)));
+    if (v === 2)
+      return migrateV4toV5(migrateV3toV4(migrateV2toV3(parsed as Record<string, unknown>)));
+    if (v === 3) return migrateV4toV5(migrateV3toV4(parsed as unknown as GameState));
+    if (v === 4) return migrateV4toV5(parsed as unknown as GameState);
+    if (v !== 5) return null; // future versions: migrate here
     return parsed as GameState;
   } catch {
     return null;
@@ -61,7 +64,12 @@ function migrateV3toV4(old: GameState): GameState {
     hiredCandidates: { week: 0, indices: [] },
     cruise: null,
     lastCruiseStars: null,
-  };
+  } as unknown as GameState;
+}
+
+/** v4 predates the events program (themes live on optional PlacedModule fields). */
+function migrateV4toV5(old: GameState): GameState {
+  return { ...old, version: 5, eventProgram: [] };
 }
 
 /**

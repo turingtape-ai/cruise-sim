@@ -62,6 +62,8 @@ export interface PlacedModule {
   deck: number;
   /** Leftmost grid cell along the deck (0 = bow side). */
   x: number;
+  /** Assigned dining theme (buffet/restaurant/bar modules only). */
+  themeId?: string | null;
 }
 
 export interface ShipLayout {
@@ -84,7 +86,7 @@ export interface ShipState {
 
 /** The one serializable object that fully describes a game in progress. */
 export interface GameState {
-  version: 4;
+  version: 5;
   /** Sim hours elapsed since EPOCH_ISO. */
   tick: number;
   speed: SpeedSetting;
@@ -100,6 +102,8 @@ export interface GameState {
   /** Active cohort, or null between cruises. */
   cruise: CruiseState | null;
   lastCruiseStars: number | null;
+  /** Enabled recurring onboard events (ids into /data/events.json). */
+  eventProgram: string[];
   /** Ordered port ids; a round trip that repeats. First entry is the home port. */
   routePortIds: string[];
   ship: ShipState;

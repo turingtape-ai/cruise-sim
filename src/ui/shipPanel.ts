@@ -38,7 +38,12 @@ const ZONE_HINTS: Record<string, string> = {
   service: 'below decks',
 };
 
-export function initShipPanel(root: HTMLElement, store: GameStoreApi, data: GameData): ShipPanel {
+export function initShipPanel(
+  root: HTMLElement,
+  store: GameStoreApi,
+  data: GameData,
+  toast: (msg: string) => void,
+): ShipPanel {
   let selectedModuleId: string | null = null;
   let selectionCb: (id: string | null) => void = () => {};
 
@@ -93,6 +98,15 @@ export function initShipPanel(root: HTMLElement, store: GameStoreApi, data: Game
     selectionCb(id);
   }
 
+  root.addEventListener('change', (e) => {
+    const select = (e.target as HTMLElement).closest<HTMLSelectElement>('select[data-theme-for]');
+    if (!select) return;
+    const placedId = Number(select.dataset.themeFor);
+    const themeId = select.value === '' ? null : select.value;
+    const error = store.getState().assignTheme(placedId, themeId);
+    if (error) toast(error);
+  });
+
   root.addEventListener('click', (e) => {
     const item = (e.target as HTMLElement).closest<HTMLButtonElement>('.palette-item');
     if (item) {
@@ -114,8 +128,33 @@ export function initShipPanel(root: HTMLElement, store: GameStoreApi, data: Game
     const module = placed ? data.modulesById.get(placed.moduleId) : null;
     if (!placed || !module) return;
     setSelection(null);
+
+    // Dining rooms can carry a theme from /data/dining.json.
+    const themes = [...data.diningThemesById.values()].filter((t) => t.kind === module.id);
+    const themePicker =
+      themes.length > 0
+        ? `<label class="theme-label">Theme
+            <select data-theme-for="${placedId}">
+              <option value="">— none —</option>
+              ${themes
+                .map((t) => {
+                  const flavor =
+                    'theme' in t
+                      ? t.theme
+                      : 'cuisine' in t
+                        ? t.cuisine
+                        : (t as { type: string }).type;
+                  return `<option value="${t.id}" ${placed.themeId === t.id ? 'selected' : ''}>
+                    ${t.name} (${flavor} · appeal ${t.appeal} · ${fmt(t.cost)}/day)</option>`;
+                })
+                .join('')}
+            </select>
+          </label>`
+        : '';
+
     sellBar.innerHTML = `
       <span>${module.name}</span>
+      ${themePicker}
       <button data-sell="${placedId}">Sell for ${fmt(module.cost * MODULE_SELL_REFUND)}</button>
       <button data-cancel-sell class="ghost-btn">Keep</button>
     `;

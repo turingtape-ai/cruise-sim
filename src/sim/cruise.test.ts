@@ -5,16 +5,13 @@ import { describe, expect, it } from 'vitest';
 import { advanceTicks, type SimData } from './tick';
 import { createNewGame } from './state';
 import { loadGameData } from './data/load';
+import { simDataFrom } from './tick.test.helpers';
 import { FARE_PER_NIGHT, PORT_STAY_HOURS } from './constants';
 import { layoutStats } from './ship';
 import type { GameState } from './types';
 
 const data = loadGameData();
-const simData: SimData = {
-  portsById: data.portsById,
-  modulesById: data.modulesById,
-  crewRolesById: data.crewRolesById,
-};
+const simData: SimData = simDataFrom(data);
 
 function gameOnRoute(): GameState {
   const g = createNewGame('miami');
