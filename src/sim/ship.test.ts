@@ -8,12 +8,16 @@ import {
   starterLayout,
 } from './ship';
 import { loadGameData } from './data/load';
+import { simDataFrom } from './tick.test.helpers';
 import { deserialize, serialize } from './save';
 import { createNewGame } from './state';
 import { advanceTicks } from './tick';
 import type { GameState, PlacedModule } from './types';
 
-const { portsById, modulesById, crewRolesById } = loadGameData();
+const gameData = loadGameData();
+const { portsById, modulesById, crewRolesById } = gameData;
+void portsById;
+void crewRolesById;
 const mod = (id: string) => modulesById.get(id)!;
 
 describe('starterLayout', () => {
@@ -169,7 +173,7 @@ describe('upkeep', () => {
     const g = createNewGame();
     const perDay = layoutStats(g.ship.layout, modulesById).upkeepPerDay;
     const wages = g.crew.reduce((s, c) => s + c.wagePerDay, 0);
-    const { state } = advanceTicks(g, 24, { portsById, modulesById, crewRolesById });
+    const { state } = advanceTicks(g, 24, simDataFrom(gameData));
     expect(g.money - state.money).toBeCloseTo(perDay + wages, 6);
   });
 });
@@ -182,7 +186,7 @@ describe('save migrations', () => {
     delete (legacy.ship as Record<string, unknown>).layout;
     const restored = deserialize(JSON.stringify(legacy));
     expect(restored).not.toBeNull();
-    expect(restored!.version).toBe(4);
+    expect(restored!.version).toBe(5);
     expect(restored!.ship.layout.zones.length).toBe(restored!.ship.layout.decks);
     expect(layoutStats(restored!.ship.layout, modulesById).hasEngine).toBe(true);
   });
@@ -214,7 +218,7 @@ describe('save migrations', () => {
     };
     const restored = deserialize(JSON.stringify(v2));
     expect(restored).not.toBeNull();
-    expect(restored!.version).toBe(4);
+    expect(restored!.version).toBe(5);
     const expectedRefund = mod('casino').cost + mod('pool').cost;
     expect(restored!.money - modern.money).toBe(expectedRefund);
     expect(restored!.ship.layout.elevatorCols.length).toBe(3);

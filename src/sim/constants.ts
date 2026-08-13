@@ -163,3 +163,36 @@ export const ARCHETYPE_MIX: Record<Archetype, number> = {
  * PLACEHOLDER until Phase 5 replaces it with demand & price elasticity (§4.4).
  */
 export const FARE_PER_NIGHT = 180;
+
+// ---- Phase 4 (live): dining themes, excursions, events. GAME_RULES §4.2c. ----
+
+/** Themed venue service multiplier: 1 + factor × appeal/10 (up to 1.5×). */
+export const THEME_APPEAL_FACTOR = 0.5;
+/** Extra per preferred-tag match between a venue/event/excursion and an archetype. */
+export const TAG_MATCH_BONUS = 0.15;
+/** At most this many tag matches count. */
+export const TAG_MATCH_CAP = 2;
+
+/** Tags each archetype gravitates toward (matched against content appeal tags). */
+export const ARCHETYPE_PREFERRED_TAGS: Record<Archetype, string[]> = {
+  families: ['family', 'variety', 'comfort', 'casual', 'outdoor'],
+  retirees: ['quiet', 'culture', 'comfort', 'morning', 'scenic', 'historic'],
+  'party-groups': ['party', 'night', 'tropical', 'casual', 'beach'],
+  'luxury-seekers': ['luxury', 'date-night', 'quiet', 'food'],
+  adventurers: ['adventurous', 'adventure', 'variety', 'culture', 'nature', 'active'],
+};
+
+/** Share of guests who join excursions before tag affinity and capacity caps. */
+export const EXCURSION_PARTICIPATION_BASE = 0.6;
+/** The line's share of excursion ticket revenue. */
+export const EXCURSION_CUT = 0.2;
+/** Need boosts for excursion participants (scaled by guide factor & affinity). */
+export const EXCURSION_FUN_BOOST = 10;
+export const EXCURSION_NOVELTY_BOOST = 15;
+/** Guide factor bounds: 0.6 with no guide, up to ~1.4 with an elite one. */
+export const GUIDE_FACTOR = { base: 0.6, perQuality: 0.5, qualityCap: 1.6 };
+
+/** Scheduled events run at this sim hour (UTC) while a cruise is underway. */
+export const EVENT_HOUR = 20;
+/** Event boost factor from entertainer quality: base + factor × quality. */
+export const EVENT_QUALITY_FACTOR = { base: 0.6, perQuality: 0.4, qualityCap: 1.6 };

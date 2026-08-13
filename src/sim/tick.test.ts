@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { advanceTicks, type SimData } from './tick';
 import { createNewGame } from './state';
 import { loadGameData } from './data/load';
+import { simDataFrom } from './tick.test.helpers';
 import { seaRoute } from './searoute';
 import { layoutStats } from './ship';
 import { crewCost } from './tick.test.helpers';
@@ -9,11 +10,7 @@ import { FUEL_COST_PER_NM, PORT_STAY_HOURS, SHIP_SPEED_KNOTS, STARTING_MONEY } f
 import type { GameState } from './types';
 
 const data = loadGameData();
-const simData: SimData = {
-  portsById: data.portsById,
-  modulesById: data.modulesById,
-  crewRolesById: data.crewRolesById,
-};
+const simData: SimData = simDataFrom(data);
 
 /**
  * Fixture tuned for exact fuel math: a zero-wage captain (so wages don't

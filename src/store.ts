@@ -12,6 +12,7 @@ import { CREW_STARTING_MORALE } from './sim/constants';
 import { EventBus } from './sim/events';
 import { SAVE_KEY, deserialize, serialize } from './sim/save';
 import { canPlace, placeModule, removeModule } from './sim/ship';
+import { themeFitsModule } from './sim/activities';
 import { MODULE_SELL_REFUND } from './sim/constants';
 
 export interface GameStore {
@@ -29,6 +30,10 @@ export interface GameStore {
   buyModule(moduleId: string, deck: number, x: number): string | null;
   /** Sell a placed module for a partial refund. */
   sellModule(placedId: number): void;
+  /** Assign (or clear) a dining theme on a placed module. Null reason = ok. */
+  assignTheme(placedId: number, themeId: string | null): string | null;
+  /** Toggle an event in the recurring evening program. */
+  toggleEvent(eventId: string): void;
   /** This week's hiring pool with already-hired slots marked. */
   candidates(): Array<Candidate & { hired: boolean }>;
   /** Hire candidate by pool index. Returns null on success, or a reason. */
@@ -41,6 +46,9 @@ export function createGameStore(data: GameData, bus: EventBus) {
     portsById: data.portsById,
     modulesById: data.modulesById,
     crewRolesById: data.crewRolesById,
+    diningThemesById: data.diningThemesById,
+    excursionsByPortId: data.excursionsByPortId,
+    eventsById: data.eventsById,
   };
   const store = createStore<GameStore>()((set, get) => ({
     game: loadInitialGame(),
@@ -50,6 +58,48 @@ export function createGameStore(data: GameData, bus: EventBus) {
       const { state, events } = advanceTicks(get().game, ticks, simData);
       set({ game: state });
       bus.emitAll(events);
+    },
+
+    assignTheme(placedId, themeId) {
+      const game = get().game;
+      const placed = game.ship.layout.placed.find((p) => p.id === placedId);
+      if (!placed) return 'Unknown room';
+      if (themeId !== null) {
+        const theme = data.diningThemesById.get(themeId);
+        if (!theme) return 'Unknown theme';
+        if (!themeFitsModule(theme, placed.moduleId)) {
+          return `That theme needs a ${theme.kind} room`;
+        }
+      }
+      set({
+        game: {
+          ...game,
+          ship: {
+            ...game.ship,
+            layout: {
+              ...game.ship.layout,
+              placed: game.ship.layout.placed.map((p) =>
+                p.id === placedId ? { ...p, themeId } : p,
+              ),
+            },
+          },
+        },
+      });
+      return null;
+    },
+
+    toggleEvent(eventId) {
+      const game = get().game;
+      if (!data.eventsById.has(eventId)) return;
+      const enabled = game.eventProgram.includes(eventId);
+      set({
+        game: {
+          ...game,
+          eventProgram: enabled
+            ? game.eventProgram.filter((id) => id !== eventId)
+            : [...game.eventProgram, eventId],
+        },
+      });
     },
 
     candidates() {

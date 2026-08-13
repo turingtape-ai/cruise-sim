@@ -1,0 +1,56 @@
+[
+  {
+    "id": "trivia-night",
+    "name": "Trivia Night",
+    "venue": "bar",
+    "durationHours": 2,
+    "costPerRun": 300,
+    "boosts": { "fun": 6 },
+    "tags": ["casual", "culture"]
+  },
+  {
+    "id": "deck-party",
+    "name": "Deck Party",
+    "venue": "pool",
+    "durationHours": 3,
+    "costPerRun": 800,
+    "boosts": { "fun": 12, "rest": -4 },
+    "tags": ["party", "night", "outdoor"]
+  },
+  {
+    "id": "evening-show",
+    "name": "Evening Show",
+    "venue": "theater",
+    "durationHours": 2,
+    "costPerRun": 1200,
+    "boosts": { "fun": 10 },
+    "tags": ["culture", "family"]
+  },
+  {
+    "id": "formal-night",
+    "name": "Formal Night",
+    "venue": "restaurant",
+    "durationHours": 3,
+    "costPerRun": 600,
+    "boosts": { "food": 8, "fun": 4 },
+    "tags": ["luxury", "date-night"]
+  },
+  {
+    "id": "kids-carnival",
+    "name": "Kids Carnival",
+    "venue": "kids-club",
+    "durationHours": 2,
+    "costPerRun": 400,
+    "boosts": { "fun": 8 },
+    "tags": ["family"]
+  },
+  {
+    "id": "casino-tournament",
+    "name": "Casino Tournament",
+    "venue": "casino",
+    "durationHours": 3,
+    "costPerRun": 500,
+    "boosts": { "fun": 9 },
+    "tags": ["party", "luxury", "night"]
+  }
+]
