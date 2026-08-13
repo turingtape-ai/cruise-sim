@@ -6,7 +6,8 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { GameData } from '../../sim/data/load';
 import type { ShipPosition } from '../../sim/types';
-import { greatCirclePoint, greatCirclePoints, haversineNm, type LatLon } from '../../sim/geo';
+import { greatCirclePoints, haversineNm, type LatLon } from '../../sim/geo';
+import { pointAlongPath, seaRoute } from '../../sim/searoute';
 import { buildGlobeTexture } from './mapTexture';
 
 const DEG = Math.PI / 180;
@@ -46,6 +47,7 @@ export class GlobeScene {
   private pointer = new THREE.Vector2();
   private pointerDown: { x: number; y: number } | null = null;
   private hoveredPortId: string | null = null;
+  private pendingTouchPortId: string | null = null;
 
   constructor(
     private container: HTMLElement,
@@ -156,15 +158,29 @@ export class GlobeScene {
   }
 
   // Tubes, not lines: WebGL lines are always 1px, too faint over the ocean.
+  // Arcs trace the sea route (around land), not the direct great circle.
   private buildArc(from: LatLon, to: LatLon, dim: boolean): THREE.Mesh {
-    const nm = haversineNm(from, to);
-    const lift = 0.012 + Math.min(0.09, (nm / 6000) * 0.12);
-    const pts = greatCirclePoints(from, to, 48).map((p, i, arr) => {
-      const t = i / (arr.length - 1);
-      return latLonToVec3(p.lat, p.lon, 1.01 + Math.sin(t * Math.PI) * lift);
+    const route = seaRoute(from, to);
+    const lift = 0.012 + Math.min(0.06, (route.nm / 6000) * 0.1);
+    const waypoints: LatLon[] = [];
+    for (let i = 0; i + 1 < route.points.length; i++) {
+      const a = route.points[i]!;
+      const b = route.points[i + 1]!;
+      const n = Math.max(1, Math.ceil(haversineNm(a, b) / 30));
+      const seg = greatCirclePoints(a, b, n);
+      waypoints.push(...(i === 0 ? seg : seg.slice(1)));
+    }
+    const pts = waypoints.map((p, i, arr) => {
+      const t = arr.length > 1 ? i / (arr.length - 1) : 0;
+      return latLonToVec3(p.lat, p.lon, 1.008 + Math.sin(t * Math.PI) * lift);
     });
     return new THREE.Mesh(
-      new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 64, 0.0035, 6),
+      new THREE.TubeGeometry(
+        new THREE.CatmullRomCurve3(pts),
+        Math.max(64, pts.length * 2),
+        0.0035,
+        6,
+      ),
       new THREE.MeshBasicMaterial({
         color: ARC_COLOR,
         transparent: true,
@@ -182,8 +198,7 @@ export class GlobeScene {
       const from = this.data.portsById.get(position.fromPortId);
       const to = this.data.portsById.get(position.toPortId);
       if (from && to) {
-        const t = position.nmTotal > 0 ? position.nmDone / position.nmTotal : 0;
-        at = greatCirclePoint(from, to, Math.min(1, t));
+        at = pointAlongPath(seaRoute(from, to).points, position.nmDone);
       }
     }
     if (!at) {
@@ -197,18 +212,21 @@ export class GlobeScene {
     }
   }
 
-  private onPointerMove(e: PointerEvent): void {
+  private raycastPort(clientX: number, clientY: number): string | null {
     const rect = this.renderer.domElement.getBoundingClientRect();
     this.pointer.set(
-      ((e.clientX - rect.left) / rect.width) * 2 - 1,
-      -((e.clientY - rect.top) / rect.height) * 2 + 1,
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1,
     );
     this.raycaster.setFromCamera(this.pointer, this.camera);
     const hits = this.raycaster.intersectObjects([this.globe, ...this.pins.children], false);
     const first = hits[0];
-    const portId =
-      first && first.object !== this.globe ? (first.object.userData.portId as string) : null;
-    this.setHovered(portId, e.clientX, e.clientY);
+    return first && first.object !== this.globe ? (first.object.userData.portId as string) : null;
+  }
+
+  private onPointerMove(e: PointerEvent): void {
+    if (e.pointerType === 'touch') return; // touch selects on tap, not hover
+    this.setHovered(this.raycastPort(e.clientX, e.clientY), e.clientX, e.clientY);
   }
 
   private setHovered(portId: string | null, x: number, y: number): void {
@@ -225,8 +243,24 @@ export class GlobeScene {
     const down = this.pointerDown;
     this.pointerDown = null;
     if (!down) return;
-    // A click, not a drag: pointer travelled less than a few pixels.
-    if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 5) return;
+    // A click/tap, not a drag: pointer travelled less than a few pixels.
+    if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8) return;
+
+    if (e.pointerType === 'touch') {
+      // Touch has no hover, so the first tap previews a port (card), and a
+      // second tap on the same pin adds it to the route.
+      const portId = this.raycastPort(e.clientX, e.clientY);
+      if (portId && portId === this.pendingTouchPortId) {
+        this.callbacks.onPortClick(portId);
+        this.pendingTouchPortId = null;
+        this.setHovered(null, 0, 0);
+      } else {
+        this.pendingTouchPortId = portId;
+        this.setHovered(portId, e.clientX, e.clientY);
+      }
+      return;
+    }
+
     if (this.hoveredPortId) this.callbacks.onPortClick(this.hoveredPortId);
   }
 

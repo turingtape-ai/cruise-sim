@@ -13,7 +13,7 @@ import {
   TICK_HOURS,
   LOG_MAX_ENTRIES,
 } from './constants';
-import { haversineNm } from './geo';
+import { seaRoute } from './searoute';
 import { nextPortId } from './route';
 import { formatTickShort } from './time';
 
@@ -56,7 +56,7 @@ function stepOneTick(s: GameState, portsById: Map<string, Port>, events: SimEven
     const from = portsById.get(pos.portId);
     const to = portsById.get(nextId);
     if (!from || !to) return; // stale route entry; wait for the player to fix it
-    const nmTotal = haversineNm(from, to);
+    const nmTotal = seaRoute(from, to).nm;
     s.ship.position = { kind: 'sailing', fromPortId: from.id, toPortId: to.id, nmDone: 0, nmTotal };
     pushLog(s.log, s.tick, `Departed ${from.name} for ${to.name} (${Math.round(nmTotal)} nm).`);
     events.push({

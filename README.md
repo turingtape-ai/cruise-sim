@@ -23,6 +23,9 @@ npm run build    # typecheck + production build (dist/)
 
 ## Controls
 
-- Drag to spin the globe, scroll to zoom
-- Hover a port pin for its card; click pins to build a route
-- HUD: pause / 1× / 2× / 4× time, money, sim date, route panel, ship's log
+- Drag to spin the globe, scroll (or pinch) to zoom
+- Hover a port pin for its card; click pins to build a route. On touch screens: tap a pin to
+  preview it, tap again to add it
+- Ships follow water-only sea routes (A* over an ocean grid) — no sailing across Cuba
+- HUD: pause / 1× / 2× / 4× time, money, sim date, route panel, ship's log; panel headers
+  collapse on tap

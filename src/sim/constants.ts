@@ -36,6 +36,17 @@ export const STARTING_MONEY = 500_000;
 
 export const EARTH_RADIUS_NM = 3440.065;
 
+// Sea routing (water-grid A*; see src/sim/searoute.ts and GAME_RULES §4.1).
+/** Ocean grid resolution in degrees; 0.5° keeps straits like Yucatán Channel open. */
+export const SEA_GRID_DEG = 0.5;
+/** How far (in cells) a coastal port may snap to the nearest water cell. */
+export const SEA_SNAP_MAX_CELLS = 4;
+/**
+ * Sampling step when checking a smoothed segment stays on water. Must stay
+ * below the narrowest cell width in playable latitudes (~13 nm at 64°N).
+ */
+export const SEA_LOS_SAMPLE_NM = 8;
+
 export const LOG_MAX_ENTRIES = 100;
 
 // ---- Phase 3+ constants: designed now (GAME_RULES §3/§4), consumed by later phases. ----

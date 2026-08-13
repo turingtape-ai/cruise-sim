@@ -1,4 +1,4 @@
-import { haversineNm } from './geo';
+import { seaRoute } from './searoute';
 import type { Port } from './data/schemas';
 import { PORT_STAY_HOURS, SHIP_SPEED_KNOTS, FUEL_COST_PER_NM, type ShipClass } from './constants';
 
@@ -34,7 +34,7 @@ export function summarizeRoute(
     const from = portsById.get(fromId);
     const to = portsById.get(toId);
     if (!from || !to) throw new Error(`route references unknown port: ${fromId} → ${toId}`);
-    legs.push({ fromPortId: fromId, toPortId: toId, nm: haversineNm(from, to) });
+    legs.push({ fromPortId: fromId, toPortId: toId, nm: seaRoute(from, to).nm });
   }
   const totalNm = legs.reduce((s, l) => s + l.nm, 0);
   const sailingHours = totalNm / SHIP_SPEED_KNOTS[shipClass];

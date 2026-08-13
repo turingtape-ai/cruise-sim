@@ -2,6 +2,18 @@
 
 Unspecified calls made while building, newest first.
 
+- **Sea routing is computed, not shipped as data**: rather than vendoring a marine-network
+  dataset (e.g. Eurostat SeaRoute/MARNET), routes come from A* over a 0.5° water grid derived
+  from the world-atlas land polygons we already bundle. Zero new data files, deterministic,
+  testable in pure sim code. Sub-cell straits are hand-carved corridors (the same trick real
+  marine networks use). Swap in a real lane dataset later if lanes should follow traffic.
+- **Harbor approaches are below grid resolution**: within ~60 nm of a port the path may clip
+  coastal cells. Accepted — pins sit on coastlines, and modeling harbor channels would need a
+  much finer grid for no gameplay gain.
+- **Touch UX: tap-to-preview, tap-again-to-add** (no hover on phones); the port card docks to
+  the bottom of the screen; panels collapse via their headers, ship's log starts collapsed on
+  small screens.
+
 - **Routes repeat**: after the last port, the ship sails back to the first port and the loop
   continues while unpaused. The brief's "cruise ends → resolve" screen belongs to Phase 5
   economy; for Phase 1 a continuous loop demonstrates sailing best.

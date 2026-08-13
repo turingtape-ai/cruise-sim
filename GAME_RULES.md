@@ -53,6 +53,9 @@ Single source of truth for tunables. Mirror of `src/sim/constants.ts` — keep i
 | `PORT_STAY_HOURS`                   | 10                       | sim hours                 | Default dock time per Port call.                                                                                                |
 | `PORT_FEE_BY_TIER`                  | 500 / 1200 / 2500 / 5000 | $                         | Indexed by port size tier 1–4. Charged on arrival. _(Phase 5 — documented now, charged from Phase 1 at 0×; see Open Questions)_ |
 | `STARTING_MONEY`                    | 500000                   | $                         | New game bankroll.                                                                                                              |
+| `SEA_GRID_DEG`                      | 0.5                      | degrees                   | Ocean-grid resolution for sea routing (§4.1).                                                                                   |
+| `SEA_SNAP_MAX_CELLS`                | 4                        | cells                     | Max distance a coastal port snaps to open water.                                                                                |
+| `SEA_LOS_SAMPLE_NM`                 | 8                        | nm                        | Water-check sampling when smoothing routes; below narrowest cell width.                                                         |
 | `NEED_DECAY_PER_TICK.food`          | 4                        | pts / tick                | Needs are 0–100. _(Phase 3)_                                                                                                    |
 | `NEED_DECAY_PER_TICK.fun`           | 3                        | pts / tick                | _(Phase 3)_                                                                                                                     |
 | `NEED_DECAY_PER_TICK.rest`          | 2                        | pts / tick                | _(Phase 3)_                                                                                                                     |
@@ -67,9 +70,9 @@ Single source of truth for tunables. Mirror of `src/sim/constants.ts` — keep i
 
 Written in plain math. Implemented (or to be implemented) as pure functions in `src/sim/`.
 
-### 4.1 Fuel cost (Phase 1 — live)
+### 4.1 Fuel cost & sea routing (Phase 1 — live)
 
-For a Leg of great-circle length `d` nautical miles sailed by ship class `c`:
+For a Leg of sea-route length `d` nautical miles sailed by ship class `c`:
 
 ```
 fuelCost(d, c) = d × FUEL_COST_PER_NM[c]
@@ -77,7 +80,16 @@ fuelCost(d, c) = d × FUEL_COST_PER_NM[c]
 
 Charged continuously while sailing: each tick underway costs
 `SHIP_SPEED_KNOTS[c] × FUEL_COST_PER_NM[c]` dollars (distance covered that hour × unit cost).
-Great-circle distance uses the haversine formula with Earth radius 3440.065 nm.
+
+**Sea routing**: `d` is not the direct great circle — it is the length of a water-only path.
+The world's land polygons are rasterized into a `SEA_GRID_DEG` ocean grid (a cell is water if
+open sea covers its center); A* finds the shortest water path between ports (8-connected, no
+diagonal corner-cutting, longitude wraps); a line-of-sight pass sampled every
+`SEA_LOS_SAMPLE_NM` smooths the staircase while staying on water. Straits narrower than one
+cell (Øresund, Gibraltar, Dover, Juan de Fuca, the Inside Passage approaches) are hand-carved
+corridors, as in real marine routing networks. Within 60 nm of a port the path is below grid
+resolution (harbor approach) and may visually hug the coast. Point distances use the haversine
+formula with Earth radius 3440.065 nm.
 
 ### 4.2 Satisfaction score (Phase 3/5 — designed)
 
@@ -172,8 +184,9 @@ Each entry: `id` (unique), `name`, plus:
   lands (Phase 5) would only drain money. Currently charged at 0×. Decide when Phase 5 lands.
 - **Seasonality**: demand tables per region/season are designed (§4.4) but the season calendar
   (which months favor Alaska vs Caribbean) is not yet specified.
-- **Do routes need explicit sea-lane routing?** Great-circle legs can cross land (e.g. Miami →
-  Cozumel clips Cuba visually). Acceptable for v0.1; revisit with waypoint routing later.
+- ~~Do routes need explicit sea-lane routing?~~ **Resolved**: water-grid A* routing shipped
+  (§4.1). Remaining follow-ups: Panama/Suez/Bosphorus corridors are not carved yet — needed
+  before cross-basin routes (e.g. Caribbean → Alaska) look right.
 - **St. Petersburg / Baltic coverage**: omitted for now (cruise lines suspended calls); Northern
   Europe region leans Norway/Iceland instead.
 - **Day/night cycle on the globe**: optional per the brief; not scheduled to a phase yet.
