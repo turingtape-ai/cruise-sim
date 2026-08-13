@@ -20,11 +20,13 @@ export interface Hud {
   showHoverCard(portId: string | null, clientX: number, clientY: number): void;
   /** Transient message (e.g. placement errors). */
   toast(message: string): void;
-  setView(view: 'globe' | 'ship'): void;
+  setView(view: 'globe' | 'ship' | 'crew'): void;
 }
 
+export type HudView = 'globe' | 'ship' | 'crew';
+
 export interface HudOptions {
-  onViewChange(view: 'globe' | 'ship'): void;
+  onViewChange(view: HudView): void;
 }
 
 const fmtMoney = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
@@ -41,8 +43,10 @@ export function initHud(
       <nav class="view-tabs" role="tablist">
         <button data-view="globe" class="active">🌍 Globe</button>
         <button data-view="ship">🚢 Ship</button>
+        <button data-view="crew">👥 Crew</button>
       </nav>
       <div class="stat money" title="Treasury"></div>
+      <div class="stat reputation" title="Line reputation"></div>
       <div class="stat date"></div>
       <div class="speed-controls" role="group" aria-label="Time controls">
         <button data-speed="0" title="Pause">⏸</button>
@@ -61,10 +65,16 @@ export function initHud(
       <div class="ship-status"></div>
       <ol class="route-list"></ol>
       <div class="route-summary"></div>
+      <div class="guests-section" hidden>
+        <h2>Guests aboard</h2>
+        <div class="guests-summary"></div>
+        <div class="need-bars"></div>
+      </div>
       <button class="clear-route" data-action="clear" hidden>Clear route</button>
       <p class="hint">Click ports on the globe to chain a round trip, then press 1×.</p>
     </aside>
     <aside class="panel ship-panel"></aside>
+    <aside class="panel crew-panel"></aside>
     <aside class="panel log-panel">
       <h2>Ship’s log</h2>
       <ul class="log-list"></ul>
@@ -75,7 +85,11 @@ export function initHud(
 
   const q = <T extends HTMLElement>(sel: string) => root.querySelector<T>(sel)!;
   const moneyEl = q('.money');
+  const reputationEl = q('.reputation');
   const dateEl = q('.date');
+  const guestsSection = q('.guests-section');
+  const guestsSummaryEl = q('.guests-summary');
+  const needBarsEl = q('.need-bars');
   const statusEl = q('.ship-status');
   const routeListEl = q<HTMLOListElement>('.route-list');
   const routeSummaryEl = q('.route-summary');
@@ -89,7 +103,8 @@ export function initHud(
     const btn = (e.target as HTMLElement).closest('button');
     if (!btn) return;
     const s = store.getState();
-    if (btn.dataset.view === 'globe' || btn.dataset.view === 'ship') setView(btn.dataset.view);
+    if (btn.dataset.view === 'globe' || btn.dataset.view === 'ship' || btn.dataset.view === 'crew')
+      setView(btn.dataset.view);
     else if (btn.dataset.speed !== undefined) s.setSpeed(Number(btn.dataset.speed) as SpeedSetting);
     else if (btn.dataset.action === 'save') s.save();
     else if (btn.dataset.action === 'load') s.load();
@@ -116,9 +131,40 @@ export function initHud(
     return `🚢 Sailing ${from} → ${to} — ${pct}%`;
   }
 
+  const NEED_LABELS: Record<string, string> = {
+    food: '🍽 Food',
+    fun: '🎉 Fun',
+    rest: '😴 Rest',
+    novelty: '✨ Novelty',
+  };
+
+  function updateGuests(game: GameState): void {
+    const cruise = game.cruise;
+    guestsSection.hidden = !cruise;
+    if (!cruise) return;
+    guestsSummaryEl.textContent = `${cruise.guests} guests aboard`;
+    const totals: Record<string, number> = { food: 0, fun: 0, rest: 0, novelty: 0 };
+    for (const group of cruise.groups) {
+      for (const k of Object.keys(totals)) {
+        totals[k]! += group.needs[k as keyof typeof group.needs] * group.count;
+      }
+    }
+    needBarsEl.innerHTML = Object.entries(totals)
+      .map(([need, sum]) => {
+        const avg = Math.round(sum / Math.max(1, cruise.guests));
+        const tone = avg > 60 ? 'good' : avg > 30 ? 'warn' : 'bad';
+        return `<div class="need-row"><span class="need-label">${NEED_LABELS[need]}</span>
+          <div class="need-bar"><div class="need-fill ${tone}" style="width:${avg}%"></div></div>
+          <span class="need-val">${avg}</span></div>`;
+      })
+      .join('');
+  }
+
   function update(game: GameState): void {
     moneyEl.textContent = fmtMoney(game.money);
+    reputationEl.textContent = `${game.reputation.toFixed(1)}★`;
     dateEl.textContent = formatTick(game.tick);
+    updateGuests(game);
     statusEl.textContent = shipStatusText(game);
     for (const b of speedButtons)
       b.classList.toggle('active', Number(b.dataset.speed) === game.speed);
@@ -196,7 +242,7 @@ export function initHud(
     toastTimer = setTimeout(() => (toastEl.hidden = true), 2500);
   }
 
-  function setView(view: 'globe' | 'ship'): void {
+  function setView(view: HudView): void {
     document.body.dataset.view = view;
     for (const b of root.querySelectorAll<HTMLButtonElement>('[data-view]')) {
       b.classList.toggle('active', b.dataset.view === view);

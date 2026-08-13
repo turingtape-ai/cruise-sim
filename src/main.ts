@@ -5,8 +5,9 @@ import { TICKS_PER_REAL_SECOND } from './sim/constants';
 import { createGameStore } from './store';
 import { GlobeScene } from './render/globe/GlobeScene';
 import { ShipScene } from './render/ship/ShipScene';
-import { initHud } from './ui/hud';
+import { initHud, type HudView } from './ui/hud';
 import { initShipPanel } from './ui/shipPanel';
+import { initCrewPanel } from './ui/crewPanel';
 
 const AUTOSAVE_MS = 60_000;
 
@@ -20,13 +21,19 @@ async function boot(): Promise<void> {
   const bus = new EventBus();
   const store = createGameStore(data, bus);
 
-  let activeView: 'globe' | 'ship' = 'globe';
+  let activeView: HudView = 'globe';
   const hud = initHud(hudEl, store, data, {
     onViewChange: (view) => {
       activeView = view;
       shipScene.setActive(view === 'ship');
     },
   });
+  const crewPanel = initCrewPanel(
+    hudEl.querySelector<HTMLElement>('.crew-panel')!,
+    store,
+    data,
+    (msg) => hud.toast(msg),
+  );
   const globe = new GlobeScene(globeEl, data, {
     onPortClick: (portId) => store.getState().addPortToRoute(portId),
     onPortHover: (portId, x, y) => hud.showHoverCard(portId, x, y),
@@ -54,6 +61,7 @@ async function boot(): Promise<void> {
     globe.setRoute(s.game.routePortIds);
     globe.setShip(s.game.ship.position);
     shipPanel.update(s.game);
+    crewPanel.update(s.game);
     if (s.game.ship.layout !== lastLayout) {
       lastLayout = s.game.ship.layout;
       shipScene.setLayout(s.game.ship.layout);
@@ -77,7 +85,7 @@ async function boot(): Promise<void> {
       tickAccumulator -= whole;
       store.getState().advance(whole);
     }
-    if (activeView === 'globe') globe.render(dt);
+    if (activeView !== 'ship') globe.render(dt); // globe stays live behind the crew panel
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

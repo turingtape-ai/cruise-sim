@@ -15,6 +15,7 @@ export interface Incident {
 export interface SimEventMap {
   'ship:departed': { tick: number; fromPortId: string; toPortId: string; nmTotal: number };
   'ship:arrived': { tick: number; portId: string };
+  'cruise:completed': { tick: number; stars: number; satisfaction: number };
   'incident:started': Incident;
   'incident:resolved': Incident;
 }

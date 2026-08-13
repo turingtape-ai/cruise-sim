@@ -13,7 +13,7 @@ import { createNewGame } from './state';
 import { advanceTicks } from './tick';
 import type { GameState, PlacedModule } from './types';
 
-const { portsById, modulesById } = loadGameData();
+const { portsById, modulesById, crewRolesById } = loadGameData();
 const mod = (id: string) => modulesById.get(id)!;
 
 describe('starterLayout', () => {
@@ -168,8 +168,9 @@ describe('upkeep', () => {
   it('drains money per tick even while docked', () => {
     const g = createNewGame();
     const perDay = layoutStats(g.ship.layout, modulesById).upkeepPerDay;
-    const { state } = advanceTicks(g, 24, portsById, modulesById);
-    expect(g.money - state.money).toBeCloseTo(perDay, 6);
+    const wages = g.crew.reduce((s, c) => s + c.wagePerDay, 0);
+    const { state } = advanceTicks(g, 24, { portsById, modulesById, crewRolesById });
+    expect(g.money - state.money).toBeCloseTo(perDay + wages, 6);
   });
 });
 
@@ -181,7 +182,7 @@ describe('save migrations', () => {
     delete (legacy.ship as Record<string, unknown>).layout;
     const restored = deserialize(JSON.stringify(legacy));
     expect(restored).not.toBeNull();
-    expect(restored!.version).toBe(3);
+    expect(restored!.version).toBe(4);
     expect(restored!.ship.layout.zones.length).toBe(restored!.ship.layout.decks);
     expect(layoutStats(restored!.ship.layout, modulesById).hasEngine).toBe(true);
   });
@@ -213,7 +214,7 @@ describe('save migrations', () => {
     };
     const restored = deserialize(JSON.stringify(v2));
     expect(restored).not.toBeNull();
-    expect(restored!.version).toBe(3);
+    expect(restored!.version).toBe(4);
     const expectedRefund = mod('casino').cost + mod('pool').cost;
     expect(restored!.money - modern.money).toBe(expectedRefund);
     expect(restored!.ship.layout.elevatorCols.length).toBe(3);

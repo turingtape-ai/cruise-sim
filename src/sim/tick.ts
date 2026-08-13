@@ -1,9 +1,8 @@
 // The heart of the simulation: advance the world one tick (1 sim hour) at a time.
-// Pure — no renderer, no DOM, no randomness. (state, ports) in → (state, events) out.
+// Pure — no renderer, no DOM, no Math.random. (state, data) in → (state, events) out.
 
 import type { GameState, LogEntry } from './types';
-import type { Port, ShipModule } from './data/schemas';
-import { layoutStats } from './ship';
+import type { Port, ShipModule, CrewRole } from './data/schemas';
 import type { SimEvent } from './events';
 import {
   SHIP_SPEED_KNOTS,
@@ -13,10 +12,27 @@ import {
   PORT_FEE_MULTIPLIER,
   TICK_HOURS,
   LOG_MAX_ENTRIES,
+  FARE_PER_NIGHT,
 } from './constants';
 import { seaRoute } from './searoute';
-import { nextPortId } from './route';
+import { nextPortId, summarizeRoute } from './route';
 import { formatTickShort } from './time';
+import { layoutStats } from './ship';
+import { engineerFuelMultiplier, hasCaptain, stepCrewMorale, wagesPerTick } from './crew';
+import {
+  grantNoveltyBoost,
+  resolveCruise,
+  serviceCapacity,
+  startCruise,
+  stepNeeds,
+} from './passengers';
+
+/** Static content the sim needs every tick, bundled once. */
+export interface SimData {
+  portsById: Map<string, Port>;
+  modulesById: Map<string, ShipModule>;
+  crewRolesById: Map<string, CrewRole>;
+}
 
 export interface TickResult {
   state: GameState;
@@ -29,27 +45,28 @@ function pushLog(log: LogEntry[], tick: number, message: string): void {
 }
 
 /** Advance the sim by `ticks` whole ticks. Never mutates the input state. */
-export function advanceTicks(
-  state: GameState,
-  ticks: number,
-  portsById: Map<string, Port>,
-  modulesById: Map<string, ShipModule>,
-): TickResult {
+export function advanceTicks(state: GameState, ticks: number, data: SimData): TickResult {
   const s: GameState = structuredClone(state);
   const events: SimEvent[] = [];
-  const upkeepPerTick = layoutStats(s.ship.layout, modulesById).upkeepPerDay / 24;
-  for (let i = 0; i < ticks; i++) stepOneTick(s, portsById, upkeepPerTick, events);
+  for (let i = 0; i < ticks; i++) stepOneTick(s, data, events);
   return { state: s, events };
 }
 
-function stepOneTick(
-  s: GameState,
-  portsById: Map<string, Port>,
-  upkeepPerTick: number,
-  events: SimEvent[],
-): void {
+function stepOneTick(s: GameState, data: SimData, events: SimEvent[]): void {
   s.tick += 1;
-  s.money -= upkeepPerTick; // module upkeep accrues docked or sailing
+
+  // Continuous costs: module upkeep + crew wages, docked or sailing.
+  const stats = layoutStats(s.ship.layout, data.modulesById);
+  s.money -= stats.upkeepPerDay / 24;
+  s.money -= wagesPerTick(s.crew);
+  stepCrewMorale(s);
+
+  // Guests aboard: needs decay and get served.
+  if (s.cruise) {
+    const capacity = serviceCapacity(s.ship.layout.placed, data.modulesById);
+    stepNeeds(s.cruise, s.tick, capacity, s.crew, data.crewRolesById);
+  }
+
   const pos = s.ship.position;
 
   if (pos.kind === 'docked') {
@@ -62,9 +79,45 @@ function stepOneTick(
     if (pos.departAtTick === null) pos.departAtTick = s.tick + PORT_STAY_HOURS - 1;
     if (s.tick < pos.departAtTick) return;
 
-    const from = portsById.get(pos.portId);
-    const to = portsById.get(nextId);
+    // Seaworthiness gate: engine + bridge + a captain aboard.
+    const missing = !stats.hasEngine
+      ? 'no engine room'
+      : !stats.hasBridge
+        ? 'no bridge'
+        : !hasCaptain(s.crew)
+          ? 'no captain aboard'
+          : null;
+    if (missing) {
+      pos.departAtTick = s.tick + 24;
+      pushLog(s.log, s.tick, `Departure delayed — ${missing}. Next attempt tomorrow.`);
+      return;
+    }
+
+    const from = data.portsById.get(pos.portId);
+    const to = data.portsById.get(nextId);
     if (!from || !to) return; // stale route entry; wait for the player to fix it
+
+    // Boarding: leaving the route's home port with no cohort starts a cruise.
+    const homePortId = s.routePortIds[0];
+    if (!s.cruise && pos.portId === homePortId && stats.passengerCapacity > 0) {
+      const cruise = startCruise(s.tick, pos.portId, stats.passengerCapacity);
+      let nights = 3;
+      try {
+        const summary = summarizeRoute(s.routePortIds, data.portsById, s.ship.shipClass);
+        if (summary) nights = Math.max(1, Math.ceil(summary.totalDays));
+      } catch {
+        // unknown port in route; keep the fallback estimate
+      }
+      cruise.fare = cruise.guests * FARE_PER_NIGHT * nights;
+      s.money += cruise.fare;
+      s.cruise = cruise;
+      pushLog(
+        s.log,
+        s.tick,
+        `${cruise.guests} guests boarded for a ${nights}-night cruise — fares $${Math.round(cruise.fare).toLocaleString('en-US')}.`,
+      );
+    }
+
     const nmTotal = seaRoute(from, to).nm;
     s.ship.position = { kind: 'sailing', fromPortId: from.id, toPortId: to.id, nmDone: 0, nmTotal };
     pushLog(s.log, s.tick, `Departed ${from.name} for ${to.name} (${Math.round(nmTotal)} nm).`);
@@ -75,14 +128,18 @@ function stepOneTick(
     return;
   }
 
-  // Sailing: cover distance and burn fuel for the distance actually covered this tick.
+  // Sailing: cover distance and burn fuel for the distance actually covered
+  // this tick. A good engineer trims the fuel bill.
   const speed = SHIP_SPEED_KNOTS[s.ship.shipClass];
   const nmThisTick = Math.min(speed * TICK_HOURS, pos.nmTotal - pos.nmDone);
   pos.nmDone += nmThisTick;
-  s.money -= nmThisTick * FUEL_COST_PER_NM[s.ship.shipClass];
+  s.money -=
+    nmThisTick *
+    FUEL_COST_PER_NM[s.ship.shipClass] *
+    engineerFuelMultiplier(s.crew, data.crewRolesById);
 
   if (pos.nmDone >= pos.nmTotal - 1e-9) {
-    const port = portsById.get(pos.toPortId);
+    const port = data.portsById.get(pos.toPortId);
     const portName = port?.name ?? pos.toPortId;
     const fee = port ? PORT_FEE_BY_TIER[port.sizeTier] * PORT_FEE_MULTIPLIER : 0;
     s.money -= fee;
@@ -93,5 +150,26 @@ function stepOneTick(
     };
     pushLog(s.log, s.tick, `Arrived at ${portName}. In port for ${PORT_STAY_HOURS} hours.`);
     events.push({ type: 'ship:arrived', payload: { tick: s.tick, portId: pos.toPortId } });
+
+    if (s.cruise) {
+      if (pos.toPortId === s.cruise.homePortId) {
+        // Homecoming: settle the cruise.
+        const outcome = resolveCruise(s.cruise, s);
+        s.reputation = outcome.reputationAfter;
+        s.lastCruiseStars = outcome.stars;
+        pushLog(
+          s.log,
+          s.tick,
+          `Cruise complete — ${outcome.stars.toFixed(1)}★ (${Math.round(outcome.satisfaction)}% satisfaction). Line reputation ${s.reputation.toFixed(2)}★.`,
+        );
+        events.push({
+          type: 'cruise:completed',
+          payload: { tick: s.tick, stars: outcome.stars, satisfaction: outcome.satisfaction },
+        });
+        s.cruise = null;
+      } else if (grantNoveltyBoost(s.cruise, pos.toPortId)) {
+        pushLog(s.log, s.tick, `Guests explore ${portName} — novelty up.`);
+      }
+    }
   }
 }

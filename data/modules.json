@@ -9,9 +9,13 @@
     "upkeepPerDay": 15,
     "capacity": 2,
     "placement": "any",
-    "zones": ["cabins"],
+    "zones": [
+      "cabins"
+    ],
     "view": "inside",
-    "appealTags": ["budget"]
+    "appealTags": [
+      "budget"
+    ]
   },
   {
     "id": "cabin-oceanview",
@@ -23,9 +27,13 @@
     "upkeepPerDay": 20,
     "capacity": 2,
     "placement": "any",
-    "zones": ["cabins"],
+    "zones": [
+      "cabins"
+    ],
     "view": "oceanview",
-    "appealTags": ["comfort"]
+    "appealTags": [
+      "comfort"
+    ]
   },
   {
     "id": "cabin-balcony",
@@ -37,9 +45,14 @@
     "upkeepPerDay": 30,
     "capacity": 2,
     "placement": "any",
-    "zones": ["cabins"],
+    "zones": [
+      "cabins"
+    ],
     "view": "balcony",
-    "appealTags": ["comfort", "luxury"]
+    "appealTags": [
+      "comfort",
+      "luxury"
+    ]
   },
   {
     "id": "cabin-suite",
@@ -51,9 +64,14 @@
     "upkeepPerDay": 45,
     "capacity": 3,
     "placement": "any",
-    "zones": ["cabins"],
+    "zones": [
+      "cabins"
+    ],
     "view": "balcony",
-    "appealTags": ["luxury", "quiet"]
+    "appealTags": [
+      "luxury",
+      "quiet"
+    ]
   },
   {
     "id": "buffet",
@@ -65,8 +83,14 @@
     "upkeepPerDay": 900,
     "capacity": 60,
     "placement": "any",
-    "zones": ["top"],
-    "appealTags": ["family", "variety"]
+    "zones": [
+      "top"
+    ],
+    "appealTags": [
+      "family",
+      "variety"
+    ],
+    "servesNeed": "food"
   },
   {
     "id": "restaurant",
@@ -78,8 +102,14 @@
     "upkeepPerDay": 950,
     "capacity": 30,
     "placement": "any",
-    "zones": ["venues"],
-    "appealTags": ["luxury", "date-night"]
+    "zones": [
+      "venues"
+    ],
+    "appealTags": [
+      "luxury",
+      "date-night"
+    ],
+    "servesNeed": "food"
   },
   {
     "id": "bar",
@@ -91,8 +121,15 @@
     "upkeepPerDay": 500,
     "capacity": 20,
     "placement": "any",
-    "zones": ["top", "venues"],
-    "appealTags": ["party", "night"]
+    "zones": [
+      "top",
+      "venues"
+    ],
+    "appealTags": [
+      "party",
+      "night"
+    ],
+    "servesNeed": "fun"
   },
   {
     "id": "pool",
@@ -104,8 +141,15 @@
     "upkeepPerDay": 600,
     "capacity": 40,
     "placement": "top",
-    "zones": ["top"],
-    "appealTags": ["family", "outdoor", "party"]
+    "zones": [
+      "top"
+    ],
+    "appealTags": [
+      "family",
+      "outdoor",
+      "party"
+    ],
+    "servesNeed": "fun"
   },
   {
     "id": "theater",
@@ -117,8 +161,15 @@
     "upkeepPerDay": 1200,
     "capacity": 120,
     "placement": "any",
-    "zones": ["venues"],
-    "appealTags": ["culture", "family", "night"]
+    "zones": [
+      "venues"
+    ],
+    "appealTags": [
+      "culture",
+      "family",
+      "night"
+    ],
+    "servesNeed": "fun"
   },
   {
     "id": "casino",
@@ -130,8 +181,15 @@
     "upkeepPerDay": 1000,
     "capacity": 50,
     "placement": "any",
-    "zones": ["venues"],
-    "appealTags": ["party", "luxury", "night"]
+    "zones": [
+      "venues"
+    ],
+    "appealTags": [
+      "party",
+      "luxury",
+      "night"
+    ],
+    "servesNeed": "fun"
   },
   {
     "id": "gym",
@@ -143,8 +201,14 @@
     "upkeepPerDay": 300,
     "capacity": 25,
     "placement": "any",
-    "zones": ["top"],
-    "appealTags": ["healthy", "morning"]
+    "zones": [
+      "top"
+    ],
+    "appealTags": [
+      "healthy",
+      "morning"
+    ],
+    "servesNeed": "fun"
   },
   {
     "id": "kids-club",
@@ -156,8 +220,14 @@
     "upkeepPerDay": 400,
     "capacity": 30,
     "placement": "any",
-    "zones": ["top", "cabins"],
-    "appealTags": ["family"]
+    "zones": [
+      "top",
+      "cabins"
+    ],
+    "appealTags": [
+      "family"
+    ],
+    "servesNeed": "fun"
   },
   {
     "id": "crew-quarters",
@@ -169,7 +239,9 @@
     "upkeepPerDay": 200,
     "capacity": 20,
     "placement": "any",
-    "zones": ["service"],
+    "zones": [
+      "service"
+    ],
     "appealTags": []
   },
   {
@@ -182,7 +254,10 @@
     "upkeepPerDay": 800,
     "capacity": 0,
     "placement": "bottom",
-    "zones": ["venues", "service"],
+    "zones": [
+      "venues",
+      "service"
+    ],
     "hullEnd": "aft",
     "appealTags": []
   },
@@ -196,7 +271,9 @@
     "upkeepPerDay": 300,
     "capacity": 0,
     "placement": "top",
-    "zones": ["top"],
+    "zones": [
+      "top"
+    ],
     "hullEnd": "forward",
     "appealTags": []
   }

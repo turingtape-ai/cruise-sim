@@ -2,13 +2,15 @@ import portsJson from '../../../data/ports.json';
 import diningJson from '../../../data/dining.json';
 import excursionsJson from '../../../data/excursions.json';
 import modulesJson from '../../../data/modules.json';
+import crewJson from '../../../data/crew.json';
 import {
   PortsFileSchema,
   DiningFileSchema,
   ExcursionsFileSchema,
   ModulesFileSchema,
+  CrewFileSchema,
 } from './schemas';
-import type { Port, Dining, Excursion, ShipModule } from './schemas';
+import type { Port, Dining, Excursion, ShipModule, CrewData, CrewRole } from './schemas';
 
 export interface GameData {
   ports: Port[];
@@ -18,6 +20,8 @@ export interface GameData {
   excursionsByPortId: Map<string, Excursion[]>;
   modules: ShipModule[];
   modulesById: Map<string, ShipModule>;
+  crewData: CrewData;
+  crewRolesById: Map<string, CrewRole>;
 }
 
 /**
@@ -57,5 +61,20 @@ export function loadGameData(): GameData {
   const modulesById = new Map(modules.map((m) => [m.id, m]));
   if (modulesById.size !== modules.length) throw new Error('modules.json: duplicate module ids');
 
-  return { ports, portsById, dining, excursions, excursionsByPortId, modules, modulesById };
+  const crewData = CrewFileSchema.parse(crewJson);
+  const crewRolesById = new Map(crewData.roles.map((r) => [r.id, r]));
+  if (crewRolesById.size !== crewData.roles.length)
+    throw new Error('crew.json: duplicate role ids');
+
+  return {
+    ports,
+    portsById,
+    dining,
+    excursions,
+    excursionsByPortId,
+    modules,
+    modulesById,
+    crewData,
+    crewRolesById,
+  };
 }

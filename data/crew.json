@@ -1,0 +1,23 @@
+{
+  "roles": [
+    { "id": "captain", "label": "Captain", "serves": null, "wagePerDay": 600 },
+    { "id": "chef", "label": "Chef", "serves": "food", "wagePerDay": 260 },
+    { "id": "bartender", "label": "Bartender", "serves": "fun", "wagePerDay": 180 },
+    { "id": "entertainer", "label": "Entertainer", "serves": "fun", "wagePerDay": 200 },
+    { "id": "housekeeping", "label": "Housekeeping", "serves": "rest", "wagePerDay": 150 },
+    { "id": "engineer", "label": "Engineer", "serves": null, "wagePerDay": 320 },
+    { "id": "excursion-guide", "label": "Excursion Guide", "serves": "novelty", "wagePerDay": 170 }
+  ],
+  "firstNames": [
+    "Amara", "Bruno", "Camille", "Dmitri", "Elena", "Farid", "Greta", "Hiro",
+    "Ines", "Jonas", "Kaia", "Luca", "Mei", "Nadia", "Owen", "Priya",
+    "Quentin", "Rosa", "Sven", "Talia", "Umberto", "Vera", "Wesley", "Ximena",
+    "Yusuf", "Zofia", "Anders", "Bianca", "Cyrus", "Dalia"
+  ],
+  "lastNames": [
+    "Silva", "Okafor", "Larsen", "Novak", "Marino", "Haddad", "Kowalski", "Tanaka",
+    "Fernandez", "Bergström", "Costa", "Dubois", "Eriksen", "Fontaine", "Garcia", "Halvorsen",
+    "Ivanova", "Jansen", "Katz", "Lindqvist", "Moreau", "Nakamura", "Oliveira", "Petrov",
+    "Quinn", "Rossi", "Santos", "Torres", "Ueda", "Vargas"
+  ]
+}

@@ -5,7 +5,10 @@ import { createStore } from 'zustand/vanilla';
 import type { GameState, SpeedSetting } from './sim/types';
 import type { GameData } from './sim/data/load';
 import { createNewGame } from './sim/state';
-import { advanceTicks } from './sim/tick';
+import { advanceTicks, type SimData } from './sim/tick';
+import { candidatesForWeek, weekOfTick, type Candidate } from './sim/crew';
+import { layoutStats } from './sim/ship';
+import { CREW_STARTING_MORALE } from './sim/constants';
 import { EventBus } from './sim/events';
 import { SAVE_KEY, deserialize, serialize } from './sim/save';
 import { canPlace, placeModule, removeModule } from './sim/ship';
@@ -26,17 +29,73 @@ export interface GameStore {
   buyModule(moduleId: string, deck: number, x: number): string | null;
   /** Sell a placed module for a partial refund. */
   sellModule(placedId: number): void;
+  /** This week's hiring pool with already-hired slots marked. */
+  candidates(): Array<Candidate & { hired: boolean }>;
+  /** Hire candidate by pool index. Returns null on success, or a reason. */
+  hire(index: number): string | null;
+  dismiss(crewId: number): void;
 }
 
 export function createGameStore(data: GameData, bus: EventBus) {
+  const simData: SimData = {
+    portsById: data.portsById,
+    modulesById: data.modulesById,
+    crewRolesById: data.crewRolesById,
+  };
   const store = createStore<GameStore>()((set, get) => ({
     game: loadInitialGame(),
 
     advance(ticks) {
       if (ticks <= 0) return;
-      const { state, events } = advanceTicks(get().game, ticks, data.portsById, data.modulesById);
+      const { state, events } = advanceTicks(get().game, ticks, simData);
       set({ game: state });
       bus.emitAll(events);
+    },
+
+    candidates() {
+      const game = get().game;
+      const week = weekOfTick(game.tick);
+      const hired = game.hiredCandidates.week === week ? game.hiredCandidates.indices : [];
+      return candidatesForWeek(game.rngSeed, week, data.crewData).map((c, i) => ({
+        ...c,
+        hired: hired.includes(i),
+      }));
+    },
+
+    hire(index) {
+      const game = get().game;
+      const week = weekOfTick(game.tick);
+      const pool = candidatesForWeek(game.rngSeed, week, data.crewData);
+      const candidate = pool[index];
+      if (!candidate) return 'Unknown candidate';
+      const hired = game.hiredCandidates.week === week ? game.hiredCandidates.indices : [];
+      if (hired.includes(index)) return 'Already hired';
+      const berths = layoutStats(game.ship.layout, data.modulesById).crewCapacity;
+      if (game.crew.length >= berths) return 'No free crew berths — build more crew quarters';
+      set({
+        game: {
+          ...game,
+          crew: [
+            ...game.crew,
+            {
+              id: game.crewNextId,
+              name: candidate.name,
+              roleId: candidate.roleId,
+              skill: candidate.skill,
+              wagePerDay: candidate.wagePerDay,
+              morale: CREW_STARTING_MORALE,
+            },
+          ],
+          crewNextId: game.crewNextId + 1,
+          hiredCandidates: { week, indices: [...hired, index] },
+        },
+      });
+      return null;
+    },
+
+    dismiss(crewId) {
+      const game = get().game;
+      set({ game: { ...game, crew: game.crew.filter((c) => c.id !== crewId) } });
     },
 
     buyModule(moduleId, deck, x) {
@@ -103,7 +162,8 @@ export function createGameStore(data: GameData, bus: EventBus) {
     },
 
     newGame() {
-      set({ game: createNewGame() });
+      // Seeding is a UI-side effect; the sim itself never calls Math.random.
+      set({ game: createNewGame(undefined, Math.floor(Math.random() * 2 ** 31)) });
       get().save();
     },
 

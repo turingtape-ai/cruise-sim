@@ -1,4 +1,36 @@
-import type { ShipClass } from './constants';
+import type { Archetype, NeedKind, ShipClass } from './constants';
+
+export interface CrewMember {
+  id: number;
+  name: string;
+  roleId: string;
+  /** 1–5. */
+  skill: number;
+  wagePerDay: number;
+  /** 0–100; scales service quality. */
+  morale: number;
+}
+
+export interface PassengerGroup {
+  archetype: Archetype;
+  count: number;
+  /** Current need levels, 0–100. */
+  needs: Record<NeedKind, number>;
+  /** Sum of need levels over the cruise so far (for end-of-cruise averages). */
+  needTotals: Record<NeedKind, number>;
+}
+
+export interface CruiseState {
+  startedAtTick: number;
+  homePortId: string;
+  guests: number;
+  groups: PassengerGroup[];
+  /** Ports that already paid out their novelty boost this cruise. */
+  portsVisited: string[];
+  /** Ticks simulated with this cohort aboard (denominator for averages). */
+  ticks: number;
+  fare: number;
+}
 
 export type SpeedSetting = 0 | 1 | 2 | 4;
 
@@ -52,13 +84,22 @@ export interface ShipState {
 
 /** The one serializable object that fully describes a game in progress. */
 export interface GameState {
-  version: 3;
+  version: 4;
   /** Sim hours elapsed since EPOCH_ISO. */
   tick: number;
   speed: SpeedSetting;
   money: number;
-  /** 0.5–5.0 stars; static until Phase 5. */
+  /** 0.5–5.0 stars; updated by cruise outcomes (EWMA, §4.3). */
   reputation: number;
+  /** Seed for all deterministic sim randomness (candidates, cohorts). */
+  rngSeed: number;
+  crew: CrewMember[];
+  crewNextId: number;
+  /** Candidate-pool bookkeeping: which indices of the current week were hired. */
+  hiredCandidates: { week: number; indices: number[] };
+  /** Active cohort, or null between cruises. */
+  cruise: CruiseState | null;
+  lastCruiseStars: number | null;
   /** Ordered port ids; a round trip that repeats. First entry is the home port. */
   routePortIds: string[];
   ship: ShipState;
