@@ -67,6 +67,18 @@ Single source of truth for tunables. Mirror of `src/sim/constants.ts` — keep i
 | `NEED_DECAY_PER_TICK.novelty`       | 1.5                      | pts / tick                | _(Phase 3)_                                                                                                                     |
 | `ARCHETYPE_NEED_WEIGHTS`            | see `constants.ts`       | —                         | Per-archetype multipliers on decay & scoring. _(Phase 3)_                                                                       |
 | `CREW_MORALE_DECAY_PER_SAILING_DAY` | 1.5                      | pts / day                 | Morale 0–100. _(Phase 3)_                                                                                                       |
+| `NEED_REGEN_PER_TICK`               | food 9 / fun 7 / rest 12 | pts / tick                | Base replenishment at full coverage & quality 1.0 (§4.2b).                                                                      |
+| `NEED_START`                        | 80                       | pts                       | Cohort needs at boarding.                                                                                                       |
+| `NOVELTY_PORT_BOOST`                | 35                       | pts                       | First call at a new port per cruise.                                                                                            |
+| `NIGHT_HOURS`                       | 22:00–06:00              | sim hours                 | Rest replenishes only at night.                                                                                                 |
+| `SELF_SERVICE_QUALITY`              | 0.15                     | —                         | Service quality with no covering crew.                                                                                          |
+| `CREW_MORALE_RECOVERY_PER_PORT_DAY` | 3                        | pts / day                 | Counterpart to the sailing decay.                                                                                               |
+| `WAGE_SKILL_FACTOR`                 | 0.7 + 0.15 × skill       | —                         | Wage multiplier on the role base.                                                                                               |
+| `ENGINEER_FUEL_SAVING_PER_SKILL`    | 0.03                     | —                         | Best engineer trims fuel, max 15%.                                                                                              |
+| `CANDIDATES_PER_WEEK`               | 6                        | candidates                | Hiring pool size; rotates weekly (168 ticks), seeded.                                                                           |
+| `CREW_STARTING_MORALE`              | 85                       | pts                       | Morale for new hires.                                                                                                           |
+| `ARCHETYPE_MIX`                     | 30/20/20/15/15 %         | —                         | families/retirees/party/luxury/adventurers cohort split.                                                                        |
+| `FARE_PER_NIGHT`                    | 180                      | $ / guest-night           | PLACEHOLDER fare until Phase 5 demand (§4.4).                                                                                   |
 | `PRICE_ELASTICITY`                  | −1.4                     | —                         | Exponent in demand curve §4.4. _(Phase 5)_                                                                                      |
 | `SATISFACTION_TO_STARS`             | see §4.2                 | —                         | Piecewise mapping. _(Phase 5)_                                                                                                  |
 | `REPUTATION_SMOOTHING`              | 0.2                      | —                         | EWMA weight for new cruise outcomes §4.3. _(Phase 5)_                                                                           |
@@ -130,7 +142,7 @@ decks running two parallel port/starboard corridors):
   highest cabin deck. `inside` cabins go anywhere in the cabin band. (The side cutaway
   cannot show port/starboard, so core-adjacency stands in for "interior" berths.)
 
-### 4.2 Satisfaction score (Phase 3/5 — designed)
+### 4.2 Satisfaction score (Phase 3 — live)
 
 Per passenger at cruise end, needs averaged over the cruise (`avgNeed ∈ [0,100]`):
 
@@ -139,7 +151,26 @@ satisfaction = Σ_over_needs( archetypeWeight[need] × avgNeed[need] ) / Σ arch
 stars(satisfaction) = clamp(0.5 + 4.5 × (satisfaction / 100)^1.2, 0.5, 5.0)   — rounded to halves
 ```
 
-### 4.3 Reputation update (Phase 5 — designed)
+### 4.2b Needs & crew service (Phase 3 — live)
+
+Cohorts (archetype groups with averaged needs, not individual agents) board at the home port
+with every need at `NEED_START`. Per tick, per group:
+
+```
+need' = clamp(need − NEED_DECAY_PER_TICK[need] × archetypeWeight[need] + regen, 0, 100)
+regen(food|fun)  = NEED_REGEN_PER_TICK[need] × coverage × quality        (all day)
+regen(rest)      = NEED_REGEN_PER_TICK.rest × coverage × quality         (night hours only)
+coverage         = min(1, Σ venue capacity serving need / guests)         (rest: cabin berths)
+quality          = avg over covering crew of (skill/3 × morale/100), or SELF_SERVICE_QUALITY
+```
+
+Novelty has no service regen: it decays at sea and jumps `NOVELTY_PORT_BOOST` on the first
+call at each new port per cruise. Crew morale falls `CREW_MORALE_DECAY_PER_SAILING_DAY` at sea
+and recovers `CREW_MORALE_RECOVERY_PER_PORT_DAY` docked. Wages drain continuously. Departure
+requires engine + bridge + a captain. The best engineer aboard multiplies fuel cost by
+`1 − skill × ENGINEER_FUEL_SAVING_PER_SKILL`.
+
+### 4.3 Reputation update (Phase 3 — live)
 
 Reputation is a 0.5–5.0 star EWMA over cruise outcomes:
 
@@ -165,7 +196,9 @@ cruiseCosts   = fuel + wages + provisions + portFees + upkeep
 profit        = cruiseRevenue − cruiseCosts
 ```
 
-Phase 1 implements only the `fuel` term (§4.1) and `portFees` at 0× multiplier.
+Phase 3 implements `fuel`, `wages`, `upkeep`, and a placeholder `ticketRevenue`
+(`guests × FARE_PER_NIGHT × nights`, collected at boarding). Onboard spend, excursion cut,
+provisions, real port fees, and demand-driven pricing remain for Phase 5.
 
 ## 5. Content schemas
 
@@ -224,12 +257,22 @@ Each entry: `id` (unique), `name`, plus:
 | `view`         | `inside \| oceanview \| balcony` (optional, cabins)                            | Window class; drives hull-window rules (§4.1c).             |
 | `appealTags`   | string[]                                                                       | Matched against archetype preferences (Phase 3).            |
 
+### 5.5 `data/crew.json` — `{ roles, firstNames, lastNames }`
+
+| Field                  | Type                                     | Meaning                                                 |
+| ---------------------- | ---------------------------------------- | ------------------------------------------------------- |
+| `roles[].id`           | string (unique)                          | Referenced by crew members and candidates.              |
+| `roles[].label`        | string                                   | Display name.                                           |
+| `roles[].serves`       | `food \| fun \| rest \| novelty \| null` | Need this role's quality applies to; null = structural. |
+| `roles[].wagePerDay`   | number ($)                               | Base wage before the skill multiplier.                  |
+| `firstNames/lastNames` | string[]                                 | Name pools for generated candidates.                    |
+
 ## 6. Phase checklist
 
 - [x] **Phase 0 — Foundations**: scaffold (Vite/TS/Pixi/Three, ESLint/Prettier, Vitest, Pages CI); GAME_RULES.md + ARCHITECTURE.md; GameState + tick clock + save/load; `/data` JSON files with zod validation.
 - [x] **Phase 1 — Globe & routes**: interactive globe (spin/zoom/pins/hover cards); route planner with arcs and distance/day estimates; ship dot sailing the route with arrival/departure log; HUD (money, date, speed, route).
 - [x] **Phase 2 — Ship builder**: grid deck editor, room modules (Pixi).
-- [ ] **Phase 3 — Crew & passengers**: hiring, morale, archetypes, needs sim.
+- [x] **Phase 3 — Crew & passengers**: hiring, morale, archetypes, needs sim.
 - [ ] **Phase 4 — Dining, excursions, events**: menus, bookings, event scheduler.
 - [ ] **Phase 5 — Economy & reputation**: full revenue/cost model, demand, star gates.
 - [ ] **Phase 6 — Emergencies**: implement Incidents on the existing event bus.

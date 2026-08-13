@@ -24,11 +24,12 @@ number and formula lives there.
 
 ## Current phase
 
-**Phases 0–2 are complete** (foundations; globe + sea routes + HUD; Pixi deck editor with
-module placement, upkeep, and GameState v2 saves). Post-Phase-1 additions: water-grid A* sea
-routing, mobile/touch pass. Next up: **Phase 3 — crew + passengers + needs sim** (the formulas
-and constants are already designed in `GAME_RULES.md` §3–4).
-See the phase checklist in `GAME_RULES.md` §6.
+**Phases 0–3 are complete** (foundations; globe + sea routes + HUD; Pixi deck editor with
+realistic deck zoning; crew hiring/morale + passenger cohorts + needs sim with satisfaction →
+reputation). Post-plan additions: water-grid A* sea routing, mobile/touch pass. Saves are at
+**GameState v4** (chained migrations in `src/sim/save.ts`). Next up: **Phase 4 — dining,
+excursions, events** (venue themes from `/data/dining.json`, excursions per port, event
+scheduler). See the phase checklist in `GAME_RULES.md` §6.
 
 ## Commands
 

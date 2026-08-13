@@ -2,6 +2,22 @@
 
 Unspecified calls made while building, newest first.
 
+- **Passengers are cohorts, not agents**: archetype groups with averaged need meters. Cheap,
+  serializable, and enough signal for satisfaction/reputation; individual agents walking the
+  corridors can come later if Phase 4+ needs them.
+- **A placeholder flat fare** (`FARE_PER_NIGHT` at boarding) ships with Phase 3 so cruises
+  earn money before Phase 5's demand model — otherwise wages+fuel made the loop a pure drain.
+  Documented as a placeholder in GAME_RULES §3/§4.5.
+- **Deterministic hiring pool**: candidates derive from (save seed, week number) — no RNG
+  state to persist, same pool on every reload, rotates weekly. The sim never calls
+  Math.random; the store seeds new games.
+- **Seaworthiness gate is live**: departure needs engine + bridge + captain, retrying daily
+  with a log entry. The v3 "no gate yet" decision is superseded.
+- **Cohort archetype mix is fixed** (30/20/20/15/15) rather than seeded-random or
+  region-driven; regional/seasonal mixes belong with Phase 5 demand.
+- **Excursion guides** serve the novelty need in name only until Phase 4 wires excursions;
+  hiring one today does nothing beyond wages (the role exists so pools look right).
+
 - **Deck zoning abstracts real ship architecture** (researched against published cruise deck
   plans — venues low, cabins mid, Lido high, bridge forward, engine aft, elevator banks
   fore/mid/aft): implemented as per-deck zone bands + reserved elevator-core columns +

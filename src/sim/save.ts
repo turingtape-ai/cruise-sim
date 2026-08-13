@@ -46,7 +46,7 @@ function grantStarterLayout(old: Record<string, unknown>): GameState {
     ...old,
     version: 3,
     ship: { ...ship, layout: starterLayout(shipClassOf(ship)) },
-  } as GameState;
+  } as unknown as GameState;
 }
 
 /** v3 predates crew & passengers: grant the starter crew and empty cruise state. */

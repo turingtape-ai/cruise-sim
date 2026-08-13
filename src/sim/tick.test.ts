@@ -23,7 +23,9 @@ const simData: SimData = {
 function gameWithRoute(portIds: string[]): GameState {
   const g = createNewGame(portIds[0]);
   g.routePortIds = [...portIds];
-  g.crew = [{ id: 1, name: 'Test Captain', roleId: 'captain', skill: 3, wagePerDay: 0, morale: 100 }];
+  g.crew = [
+    { id: 1, name: 'Test Captain', roleId: 'captain', skill: 3, wagePerDay: 0, morale: 100 },
+  ];
   g.ship.layout = {
     ...g.ship.layout,
     placed: g.ship.layout.placed.filter((p) => !p.moduleId.startsWith('cabin')),
@@ -50,9 +52,7 @@ describe('advanceTicks', () => {
     expect(state.tick).toBe(24);
     expect(state.ship.position).toMatchObject({ kind: 'docked', portId: 'miami' });
     const expected =
-      STARTING_MONEY -
-      layoutStats(g.ship.layout, data.modulesById).upkeepPerDay -
-      crewCost(g.crew);
+      STARTING_MONEY - layoutStats(g.ship.layout, data.modulesById).upkeepPerDay - crewCost(g.crew);
     expect(state.money).toBeCloseTo(expected, 6);
     expect(events).toHaveLength(0);
   });
@@ -75,8 +75,7 @@ describe('advanceTicks', () => {
     const ticks = PORT_STAY_HOURS + 3;
     const { state } = advanceTicks(g, ticks, simData);
     expect(state.ship.position).toMatchObject({ kind: 'sailing', nmDone: speed * 3 });
-    const expected =
-      STARTING_MONEY - drain(g, ticks) - speed * 3 * FUEL_COST_PER_NM.coastal;
+    const expected = STARTING_MONEY - drain(g, ticks) - speed * 3 * FUEL_COST_PER_NM.coastal;
     expect(state.money).toBeCloseTo(expected, 6);
   });
 

@@ -23,7 +23,9 @@ export interface Candidate {
 }
 
 export function wageFor(role: CrewRole, skill: number): number {
-  return Math.round(role.wagePerDay * (WAGE_SKILL_FACTOR.base + skill * WAGE_SKILL_FACTOR.perSkill));
+  return Math.round(
+    role.wagePerDay * (WAGE_SKILL_FACTOR.base + skill * WAGE_SKILL_FACTOR.perSkill),
+  );
 }
 
 export function weekOfTick(tick: number): number {
@@ -44,7 +46,12 @@ export function candidatesForWeek(seed: number, week: number, crewData: CrewData
     const name = `${crewData.firstNames[rngInt(rng, crewData.firstNames.length)]} ${
       crewData.lastNames[rngInt(rng, crewData.lastNames.length)]
     }`;
-    candidates.push({ name, roleId: role.id, skill: Math.min(5, skill), wagePerDay: wageFor(role, Math.min(5, skill)) });
+    candidates.push({
+      name,
+      roleId: role.id,
+      skill: Math.min(5, skill),
+      wagePerDay: wageFor(role, Math.min(5, skill)),
+    });
   }
   return candidates;
 }
@@ -75,7 +82,10 @@ export function serviceQuality(
 }
 
 /** Fuel multiplier from the best engineer aboard (1.0 = no saving). */
-export function engineerFuelMultiplier(crew: CrewMember[], rolesById: Map<string, CrewRole>): number {
+export function engineerFuelMultiplier(
+  crew: CrewMember[],
+  rolesById: Map<string, CrewRole>,
+): number {
   const best = Math.max(
     0,
     ...crew.filter((c) => c.roleId === 'engineer' && rolesById.has(c.roleId)).map((c) => c.skill),

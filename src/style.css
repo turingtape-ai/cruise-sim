@@ -53,15 +53,24 @@ body {
   display: block;
 }
 
-/* View switching: exactly one scene (and its side panel) is visible. */
+/* View switching: exactly one side panel; the crew view keeps the globe live. */
 body[data-view='globe'] #ship,
-body[data-view='globe'] .ship-panel {
+body[data-view='globe'] .ship-panel,
+body[data-view='globe'] .crew-panel {
   display: none;
 }
 
 body[data-view='ship'] #globe,
 body[data-view='ship'] .route-panel,
+body[data-view='ship'] .crew-panel,
 body[data-view='ship'] .hover-card {
+  display: none;
+}
+
+body[data-view='crew'] #ship,
+body[data-view='crew'] .route-panel,
+body[data-view='crew'] .ship-panel,
+body[data-view='crew'] .hover-card {
   display: none;
 }
 
@@ -435,6 +444,164 @@ button:active {
   background: transparent;
 }
 
+/* ---- Crew panel ---- */
+
+.crew-panel {
+  top: 84px;
+  right: 12px;
+  width: 286px;
+  max-height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.crew-berths {
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.crew-list,
+.candidate-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pool-header {
+  margin-top: 14px;
+}
+
+.crew-card {
+  background: rgba(245, 233, 212, 0.06);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.cc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  gap: 8px;
+}
+
+.cc-top button[data-hire] {
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  background: var(--seafoam);
+  border-color: var(--seafoam);
+  color: var(--navy);
+}
+
+.cc-top .remove {
+  padding: 0 7px;
+  font-size: 0.75rem;
+  background: transparent;
+  border-color: transparent;
+  color: var(--cream-dim);
+}
+
+.cc-top .remove:hover {
+  color: var(--coral);
+}
+
+.cc-meta {
+  font-size: 0.74rem;
+  color: var(--cream-dim);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-meta .skill {
+  color: var(--seafoam);
+  letter-spacing: 1px;
+}
+
+.candidate.hired {
+  opacity: 0.5;
+}
+
+.hired-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--seafoam);
+}
+
+.morale-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(245, 233, 212, 0.12);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.morale-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--seafoam);
+}
+
+/* ---- Guest needs ---- */
+
+.guests-section {
+  margin-top: 12px;
+}
+
+.guests-summary {
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.need-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.need-label {
+  font-size: 0.74rem;
+  width: 76px;
+  flex: none;
+}
+
+.need-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(245, 233, 212, 0.12);
+  overflow: hidden;
+}
+
+.need-fill {
+  height: 100%;
+  border-radius: 3px;
+}
+
+.need-fill.good {
+  background: var(--seafoam);
+}
+
+.need-fill.warn {
+  background: #f2c65a;
+}
+
+.need-fill.bad {
+  background: var(--coral);
+}
+
+.need-val {
+  font-size: 0.72rem;
+  width: 22px;
+  text-align: right;
+  color: var(--cream-dim);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---- Toast ---- */
 
 .toast {
@@ -573,7 +740,8 @@ button:active {
     padding: 10px 12px;
   }
 
-  .ship-panel {
+  .ship-panel,
+  .crew-panel {
     top: auto;
     bottom: 8px;
     right: 8px;

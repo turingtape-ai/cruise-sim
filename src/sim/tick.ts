@@ -18,13 +18,14 @@ import { seaRoute } from './searoute';
 import { nextPortId, summarizeRoute } from './route';
 import { formatTickShort } from './time';
 import { layoutStats } from './ship';
+import { engineerFuelMultiplier, hasCaptain, stepCrewMorale, wagesPerTick } from './crew';
 import {
-  engineerFuelMultiplier,
-  hasCaptain,
-  stepCrewMorale,
-  wagesPerTick,
-} from './crew';
-import { grantNoveltyBoost, resolveCruise, serviceCapacity, startCruise, stepNeeds } from './passengers';
+  grantNoveltyBoost,
+  resolveCruise,
+  serviceCapacity,
+  startCruise,
+  stepNeeds,
+} from './passengers';
 
 /** Static content the sim needs every tick, bundled once. */
 export interface SimData {
