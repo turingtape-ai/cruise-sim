@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Swiss Rail Live</title>
+<meta name="description" content="A 3D map of Switzerland with every train moving on its timetable, with live delays where SBB reports them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js" crossorigin="anonymous"></script>
+<style>
+/* Layout: the map is the page. Every control is a floating glass card pinned to a corner,
+   so the imagery stays uninterrupted on a phone and a laptop alike. */
+:root{
+  --bg:#dfe6ec;            /* ground painted while the map loads */
+  --void:#c7d1da;          /* the table the country sits on, outside swissimage coverage */
+  --panel:rgba(255,255,255,.88);
+  --panel-solid:#ffffff;
+  --fg:#141a22;
+  --muted:#5b6672;
+  --line:rgba(20,26,34,.12);
+  --accent:#eb0000;        /* SBB red */
+  --ok:#1a8f4a;
+  --warn:#c25400;
+  --chip:rgba(20,26,34,.06);
+  --chip-fg:#141a22;
+  --shadow:0 8px 28px rgba(10,20,30,.18);
+  --font-ui:"Archivo",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1119; --void:#0c1420; --panel:rgba(12,18,26,.84); --panel-solid:#101822;
+    --fg:#f2f5f8; --muted:#9aa7b4; --line:rgba(242,245,248,.14); --accent:#ff3b30;
+    --ok:#4cd27a; --warn:#ffb14d; --chip:rgba(242,245,248,.1); --chip-fg:#f2f5f8;
+    --shadow:0 8px 28px rgba(0,0,0,.45); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1119; --void:#0c1420; --panel:rgba(12,18,26,.84); --panel-solid:#101822;
+  --fg:#f2f5f8; --muted:#9aa7b4; --line:rgba(242,245,248,.14); --accent:#ff3b30;
+  --ok:#4cd27a; --warn:#ffb14d; --chip:rgba(242,245,248,.1); --chip-fg:#f2f5f8;
+  --shadow:0 8px 28px rgba(0,0,0,.45); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.4 var(--font-ui);overflow:hidden;-webkit-text-size-adjust:100%}
+#map{position:absolute;inset:0}
+
+/* MapLibre's own stylesheet, trimmed to what the canvas needs */
+.maplibregl-map{overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent}
+.maplibregl-canvas{left:0;position:absolute;top:0}
+.maplibregl-canvas-container.maplibregl-interactive{cursor:grab;-webkit-user-select:none;user-select:none}
+.maplibregl-canvas-container.maplibregl-interactive:active{cursor:grabbing}
+.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,
+.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}
+.maplibregl-control-container{display:none}
+
+.card{background:var(--panel);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+
+/* top-left: brand, Swiss clock, feed status */
+.hud{position:absolute;left:16px;top:calc(16px + env(safe-area-inset-top,0px));z-index:5;padding:12px 14px;min-width:0;max-width:calc(100vw - 32px);display:grid;gap:6px}
+.hud h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.01em;display:flex;align-items:center;gap:8px}
+.hud h1 .flag{width:14px;height:14px;border-radius:3px;background:var(--accent);position:relative;flex:none}
+.hud h1 .flag::before,.hud h1 .flag::after{content:"";position:absolute;background:#fff;left:50%;top:50%;transform:translate(-50%,-50%)}
+.hud h1 .flag::before{width:8px;height:2.6px}.hud h1 .flag::after{width:2.6px;height:8px}
+.clock{font:500 22px/1 var(--font-mono);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.clock small{font:400 11px/1 var(--font-ui);color:var(--muted);margin-left:6px;letter-spacing:.08em;text-transform:uppercase}
+.status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.status .dot{width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
+.status.live .dot{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+.status.busy .dot{background:var(--warn);animation:pulse 1.2s ease-in-out infinite}
+.status.err .dot{background:var(--accent)}
+@keyframes pulse{50%{opacity:.3}}
+
+/* top-right: view controls */
+.ctl{position:absolute;right:16px;top:calc(16px + env(safe-area-inset-top,0px));z-index:5;display:grid;gap:6px;padding:6px}
+.ctl button{width:38px;height:38px;border:0;border-radius:9px;background:transparent;color:var(--fg);font:600 16px var(--font-ui);cursor:pointer;display:grid;place-items:center}
+.ctl button:hover{background:var(--chip)}
+.ctl button:focus-visible,.chips button:focus-visible,.panel button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ctl svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* bottom: fly-to chips, legend, attribution */
+.bottom{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:0 16px calc(12px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;pointer-events:none}
+.bottom>*{pointer-events:auto}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:4px 0;margin:0 -16px;padding-left:16px;padding-right:16px}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--chip-fg);border-radius:999px;padding:7px 12px;font:500 12.5px var(--font-ui);cursor:pointer;box-shadow:var(--shadow)}
+.chips button:hover{background:var(--panel-solid)}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:11.5px;color:var(--muted);padding:8px 12px;width:max-content;max-width:100%}
+.legend span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.legend i{width:9px;height:9px;border-radius:50%;border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.attr{font-size:10.5px;color:var(--muted);line-height:1.35}
+.attr a{color:inherit}
+
+/* selected train */
+.panel{position:absolute;z-index:6;right:16px;top:calc(16px + 118px + env(safe-area-inset-top,0px));width:320px;max-width:calc(100vw - 32px);max-height:calc(100% - 260px);display:flex;flex-direction:column;overflow:hidden}
+.panel header{display:flex;align-items:flex-start;gap:10px;padding:14px 14px 10px}
+.badge{flex:none;min-width:44px;height:28px;padding:0 8px;border-radius:5px;display:grid;place-items:center;font:700 14px var(--font-ui);color:#fff;letter-spacing:.02em;text-shadow:0 1px 1px rgba(0,0,0,.25)}
+.badge.light{color:#141a22;text-shadow:none}
+.panel .title{min-width:0;flex:1}
+.panel .title b{display:block;font-size:15px;font-weight:600;line-height:1.25;text-wrap:balance}
+.panel .title small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.panel .x{flex:none;border:0;background:var(--chip);color:var(--fg);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;line-height:1}
+.panel .now{padding:0 14px 10px;display:grid;gap:4px;font-size:13px}
+.panel .now .where{font-weight:500}
+.delay{display:inline-block;font:500 12px var(--font-mono);padding:2px 7px;border-radius:5px;background:var(--chip)}
+.delay.late{background:var(--accent);color:#fff}
+.delay.ok{color:var(--ok)}
+.panel .actions{display:flex;gap:6px;padding:0 14px 10px}
+.panel .actions button{border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:8px;padding:7px 11px;font:500 12.5px var(--font-ui);cursor:pointer}
+.panel .actions button[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:transparent}
+.stops{margin:0;padding:6px 0 10px;list-style:none;overflow:auto;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.stops li{display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center;padding:5px 14px;font-size:12.5px}
+.stops li.past{color:var(--muted)}
+.stops li.next{font-weight:600}
+.stops li .t{font:400 12px var(--font-mono)}
+.stops li.next .t{font-weight:500}
+.stops li .d{font:400 11px var(--font-mono);color:var(--accent)}
+.stops li.past .d{color:var(--muted)}
+
+/* loading veil */
+.veil{position:absolute;inset:0;z-index:8;display:grid;place-items:center;background:var(--bg);transition:opacity .6s;font-size:13px;color:var(--muted)}
+.veil[hidden]{display:none}
+.veil.out{opacity:0;pointer-events:none}
+
+@media (max-width:640px){
+  .hud{padding:10px 12px}
+  .clock{font-size:19px}
+  .panel{right:auto;left:16px;top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:calc(100vw - 32px);max-height:46vh}
+  .legend{display:none}
+  .bottom.has-panel .chips,.bottom.has-panel .attr{display:none}
+}
+@media (prefers-reduced-motion: reduce){ .status.busy .dot{animation:none} }
+</style>
+</head>
+<body>
+<div id="map" role="application" aria-label="3D map of Switzerland with live trains"></div>
+
+<div class="hud card">
+  <h1><span class="flag" aria-hidden="true"></span>Swiss Rail Live</h1>
+  <div class="clock"><span id="clock">--:--:--</span><small>CET · Europe/Zurich</small></div>
+  <div class="status busy" id="status"><span class="dot"></span><span id="statusText">Loading swisstopo map…</span></div>
+</div>
+
+<div class="ctl card" aria-label="Map view">
+  <button id="btnTilt" title="Tilt" aria-label="Toggle 3D tilt"><svg viewBox="0 0 24 24"><path d="M3 17l6-10 4 6 2-3 6 7z"/></svg></button>
+  <button id="btnNorth" title="Reset north" aria-label="Reset bearing to north"><svg viewBox="0 0 24 24"><path d="M12 3v18M12 3l-4 7h8z"/></svg></button>
+  <button id="btnIn" title="Zoom in" aria-label="Zoom in">+</button>
+  <button id="btnOut" title="Zoom out" aria-label="Zoom out">−</button>
+</div>
+
+<aside class="panel card" id="panel" hidden aria-live="polite"></aside>
+
+<div class="bottom" id="bottom">
+  <div class="chips" id="chips" aria-label="Fly to">
+    <button data-v="8.25,46.82,7.1,52,-8">Switzerland</button>
+    <button data-v="8.62,46.63,9.8,66,18">Gotthard</button>
+    <button data-v="9.78,46.55,9.9,62,-30">Albula · Bernina</button>
+    <button data-v="7.72,46.39,9.9,64,10">Lötschberg</button>
+    <button data-v="7.93,46.62,10.6,66,-20">Jungfrau region</button>
+    <button data-v="7.85,46.25,10.2,62,-40">Rhône valley</button>
+    <button data-v="8.54,47.37,10.8,55,0">Zürich</button>
+    <button data-v="7.44,46.95,10.8,55,0">Bern</button>
+    <button data-v="6.63,46.45,9.6,56,-15">Lake Geneva</button>
+    <button data-v="8.95,46.02,10.4,60,15">Ticino</button>
+  </div>
+  <div class="legend card">
+    <span><i style="background:#ff3b30"></i>IC · ICE · EC</span>
+    <span><i style="background:#ff9500"></i>IR</span>
+    <span><i style="background:#ffd60a"></i>RE · R</span>
+    <span><i style="background:#38b6ff"></i>S-Bahn</span>
+    <span><i style="background:#ffffff"></i>Glacier · Bernina · GoldenPass</span>
+  </div>
+  <div class="attr">Imagery &amp; map © <a href="https://www.swisstopo.admin.ch" target="_blank" rel="noopener">swisstopo</a> · Timetable &amp; delays via <a href="https://transport.opendata.ch" target="_blank" rel="noopener">transport.opendata.ch</a> · Terrain: Mapzen / AWS Open Data · Positions are interpolated between scheduled stops.</div>
+</div>
+
+<div class="veil" id="veil">Loading swisstopo imagery and terrain…</div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const statusEl=$('#status'),statusText=$('#statusText'),panel=$('#panel'),bottom=$('#bottom'),veil=$('#veil');
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const TZ='Europe/Zurich';
+
+// ---------- Clock ----------
+const clockFmt=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+const hmFmt=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+function tickClock(){$('#clock').textContent=clockFmt.format(new Date());}
+tickClock();setInterval(tickClock,1000);
+
+function setStatus(kind,text){statusEl.className='status '+kind;statusText.textContent=text;}
+
+// ---------- Map ----------
+// Any uncaught problem is shown on the page, so a phone with no console still tells you what happened.
+window.addEventListener('error',e=>{const m=(e.error&&e.error.message)||e.message||'Unknown error';setStatus('err',m);});
+window.addEventListener('unhandledrejection',e=>{const m=(e.reason&&e.reason.message)||String(e.reason);setStatus('err',m);});
+
+function fail(msg){veil.classList.remove('out');veil.hidden=false;veil.innerHTML='<div style="max-width:34ch;text-align:center;padding:0 16px;line-height:1.5">'+msg+'</div>';setStatus('err','Map could not start');}
+if(typeof maplibregl==='undefined'){
+  fail('The map library did not load. This viewer may block outside scripts; open the file in Chrome or Safari, with an internet connection.');
+  return;
+}
+function hasWebGL(){try{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'));}catch(e){return false;}}
+if(!hasWebGL()){
+  fail('This viewer has no WebGL, which the 3D map needs. Open the file in Chrome or Safari and it will work.');
+  return;
+}
+const phone=innerWidth<640;
+let map;
+try{
+  map=new maplibregl.Map({
+    container:'map',
+    style:'https://vectortiles.geo.admin.ch/styles/ch.swisstopo.imagerybasemap.vt/style.json',
+    center:[8.25,46.82],zoom:phone?6.3:7.1,pitch:phone?48:52,bearing:-8,
+    maxPitch:75,minZoom:5.5,maxZoom:17,
+    attributionControl:false,
+    antialias:false
+  });
+}catch(e){
+  fail('The map could not start: '+esc(e.message||e)+'. Open the file in Chrome or Safari.');
+  return;
+}
+
+function voidColor(){return getComputedStyle(document.documentElement).getPropertyValue('--void').trim()||'#0c1420';}
+
+map.on('load',()=>{
+  map.addSource('dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,maxzoom:15,attribution:'Terrain: Mapzen'});
+  map.setTerrain({source:'dem',exaggeration:1.25});
+  try{map.setSky({'sky-color':'#8fbef0','horizon-color':'#dbe8f5','fog-color':'#eef3f8','sky-horizon-blend':.55,'horizon-fog-blend':.6,'fog-ground-blend':.55,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,10,1,12,0]});}catch(e){}
+  if(map.getLayer('background'))map.setPaintProperty('background','background-color',voidColor());
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(map.getLayer('background'))map.setPaintProperty('background','background-color',voidColor());});
+
+  map.addSource('route',{type:'geojson',data:empty()});
+  map.addSource('routeStops',{type:'geojson',data:empty()});
+  map.addSource('trains',{type:'geojson',data:empty()});
+
+  map.addLayer({id:'route-casing',type:'line',source:'route',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':'#ffffff','line-width':['interpolate',['linear'],['zoom'],6,4,12,8],'line-opacity':.55}});
+  map.addLayer({id:'route',type:'line',source:'route',layout:{'line-cap':'round','line-join':'round'},paint:{'line-color':['get','color'],'line-width':['interpolate',['linear'],['zoom'],6,2,12,4]}});
+  map.addLayer({id:'route-stops',type:'circle',source:'routeStops',paint:{'circle-radius':['interpolate',['linear'],['zoom'],6,2,12,4],'circle-color':'#ffffff','circle-stroke-color':['get','color'],'circle-stroke-width':1.5,'circle-pitch-alignment':'map'}});
+  map.addLayer({id:'trains-glow',type:'circle',source:'trains',paint:{'circle-radius':['interpolate',['linear'],['zoom'],6,7,10,12,14,18],'circle-color':['get','color'],'circle-opacity':['case',['get','selected'],.45,.22],'circle-blur':.9,'circle-pitch-alignment':'map'}});
+  map.addLayer({id:'trains',type:'circle',source:'trains',paint:{'circle-radius':['interpolate',['linear'],['zoom'],6,3.2,10,5.2,14,8],'circle-color':['get','color'],'circle-stroke-color':'#ffffff','circle-stroke-width':['case',['get','selected'],2.5,1.3],'circle-pitch-alignment':'map'}});
+  map.addLayer({id:'trains-hit',type:'circle',source:'trains',paint:{'circle-radius':16,'circle-opacity':0,'circle-pitch-alignment':'viewport'}});
+
+  map.on('click','trains-hit',e=>{const f=e.features&&e.features[0];if(f){select(f.properties.key);e.originalEvent._hit=true;}});
+  map.on('click',e=>{if(!e.originalEvent._hit)select(null);});
+  map.on('mouseenter','trains-hit',()=>map.getCanvas().style.cursor='pointer');
+  map.on('mouseleave','trains-hit',()=>map.getCanvas().style.cursor='');
+  ['dragstart','wheel','touchstart','mousedown'].forEach(ev=>map.on(ev,()=>{spinning=false;if(ev==='dragstart')setFollow(false);}));
+
+  veil.classList.add('out');setTimeout(()=>veil.hidden=true,700);
+  setStatus('busy','Fetching timetables…');
+  startFeed();
+  if(!reduced)spin();
+});
+map.on('error',e=>{const m=e&&e.error&&e.error.message||'';if(/style/i.test(m))setStatus('err','Map tiles unavailable');});
+
+// slow turntable until the first touch
+let spinning=true;
+function spin(){if(!spinning)return;map.rotateTo(map.getBearing()+1.2,{duration:3000,easing:t=>t});setTimeout(spin,3000);}
+
+// view controls
+$('#btnIn').onclick=()=>{spinning=false;map.zoomIn();};
+$('#btnOut').onclick=()=>{spinning=false;map.zoomOut();};
+$('#btnNorth').onclick=()=>{spinning=false;map.easeTo({bearing:0,duration:600});};
+$('#btnTilt').onclick=()=>{spinning=false;map.easeTo({pitch:map.getPitch()>20?0:60,duration:700});};
+$('#chips').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-v]');if(!b)return;spinning=false;setFollow(false);
+  const [lng,lat,zoom,pitch,bearing]=b.dataset.v.split(',').map(Number);
+  map.flyTo({center:[lng,lat],zoom:phone?zoom-0.6:zoom,pitch,bearing,duration:reduced?0:2600,essential:true});
+});
+
+// ---------- Timetable feed ----------
+const API='https://transport.opendata.ch/v1/stationboard';
+// [station, departures to request]. Big hubs also get a deeper look-back on first load.
+const HUBS=[['Zürich HB',90],['Bern',70],['Basel SBB',60],['Genève',50],['Lausanne',60],['Luzern',60],['Olten',50],['Winterthur',50],['St. Gallen',50],['Biel/Bienne',40],['Chur',40],['Brig',40],['Bellinzona',30],['Interlaken Ost',30],
+  ['Sargans',30],['Visp',30],['Spiez',30],['Lugano',30],['Arth-Goldau',30],['St. Moritz',25],['Montreux',25],['Davos Platz',20],['Andermatt',20],['Zermatt',15],['Zweisimmen',15],['Grindelwald',15]];
+const DEEP_HUBS=14;
+const NOT_RAIL=new Set(['B','BUS','NFB','NFO','NFT','EXB','T','TRAM','NFT','BAT','FUN','GB','LB','PB','SL','CC','M','ASC','AT','TX','KB','SB','BB','FAE','BN']);
+const SCENIC=new Set(['PE','BEX','GEX','GPX','VAE','ARZ','IRE']);
+const EXPRESS=new Set(['IC','ICE','EC','ICN','TGV','RJ','RJX','NJ','EN','EXT','CNL','ICB','EST']);
+function colorFor(cat){cat=(cat||'').toUpperCase();
+  if(SCENIC.has(cat))return '#ffffff';
+  if(EXPRESS.has(cat))return '#ff3b30';
+  if(cat==='IR')return '#ff9500';
+  if(cat==='S'||cat==='SN'||cat==='RB')return '#38b6ff';
+  return '#ffd60a';}
+
+const journeys=new Map();   // key -> journey
+const graph=new Map();      // station id -> {lat,lon,adj:Map(id->dist)}
+const routeCache=new Map(); // "a|b" -> [[lon,lat],...] or null
+let graphVersion=0;
+
+const dtFmt=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
+function zurichStamp(d){return dtFmt.format(d).replace(',','');}  // "2026-10-01 07:25"
+function parseIso(s){return s?Date.parse(s.replace(/([+-]\d{2})(\d{2})$/,'$1:$2')):null;}
+function effTime(ts,prog,delay){if(prog){const p=parseIso(prog);if(p)return p;}if(ts)return ts*1000+((delay||0)*60000);return null;}
+
+async function fetchBoard(station,limit,minutesAgo){
+  const dt=zurichStamp(new Date(Date.now()-minutesAgo*60000));
+  const u=API+'?station='+encodeURIComponent(station)+'&limit='+limit+'&datetime='+encodeURIComponent(dt);
+  const r=await fetch(u,{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  return r.json();
+}
+
+function ingest(board){
+  const origin=board.station;if(!origin||!board.stationboard)return 0;
+  const dayKey=zurichStamp(new Date()).slice(0,10);
+  let n=0;
+  for(const j of board.stationboard){
+    const cat=(j.category||'').toUpperCase();
+    if(NOT_RAIL.has(cat)||!j.passList||j.passList.length<2)continue;
+    const stops=[];
+    j.passList.forEach((p,i)=>{
+      const st=p.station||{};const c=st.coordinate||{};
+      let lat=c.x,lon=c.y,name=st.name,id=st.id;
+      if(i===0){lat=origin.coordinate.x;lon=origin.coordinate.y;name=origin.name;id=origin.id;}
+      if(lat==null||lon==null)return;
+      const pr=p.prognosis||{};
+      stops.push({id:String(id),name:name||'',lat,lon,
+        arr:effTime(p.arrivalTimestamp,pr.arrival,p.delay),dep:effTime(p.departureTimestamp,pr.departure,p.delay),
+        sArr:p.arrivalTimestamp?p.arrivalTimestamp*1000:null,sDep:p.departureTimestamp?p.departureTimestamp*1000:null,
+        delay:(p.delay==null?null:p.delay),live:!!(pr.arrival||pr.departure)});
+    });
+    const timed=stops.filter(s=>s.arr||s.dep);
+    if(timed.length<2)continue;
+    const firstDep=timed[0].dep||timed[0].arr;
+    const schedDep=timed[0].sDep||timed[0].sArr||firstDep;
+    const key=(j.operator||cat)+'|'+(j.name||j.number)+'|'+dayKey+'|'+Math.round(schedDep/3600000/6);
+    const label=cat+(j.number&&j.number!==j.name?' '+j.number:'');
+    journeys.set(key,{key,cat,num:j.number||'',name:j.name||'',operator:j.operator||'',to:j.to||stops[stops.length-1].name,
+      label,color:colorFor(cat),stops,t0:firstDep,t1:timed[timed.length-1].arr||timed[timed.length-1].dep,legs:null,legsVersion:-1});
+    // add graph edges from consecutive stops; short hops only, so express shortcuts never become rails
+    for(let i=1;i<stops.length;i++){const a=stops[i-1],b=stops[i];const d=hav(a.lat,a.lon,b.lat,b.lon);if(d<=12000){addEdge(a,b,d);}}
+    n++;
+  }
+  return n;
+}
+function node(s){let g=graph.get(s.id);if(!g){g={lat:s.lat,lon:s.lon,adj:new Map()};graph.set(s.id,g);}return g;}
+function addEdge(a,b,d){const ga=node(a),gb=node(b);if(!ga.adj.has(b.id)){ga.adj.set(b.id,d);gb.adj.set(a.id,d);graphVersion++;}}
+
+// A* over the station graph: express trains follow the rails that stopping trains revealed
+function route(a,b){
+  const k=a.id<b.id?a.id+'|'+b.id:b.id+'|'+a.id;
+  const cached=routeCache.get(k);
+  if(cached&&cached.v===graphVersion)return cached.path?(a.id<b.id?cached.path:cached.path.slice().reverse()):null;
+  const straight=hav(a.lat,a.lon,b.lat,b.lon);
+  let path=null;
+  if(straight>2500&&graph.has(a.id)&&graph.has(b.id)){
+    const dist=new Map([[a.id,0]]),prev=new Map(),open=[[hav(a.lat,a.lon,b.lat,b.lon),a.id]],closed=new Set();
+    let found=false,iter=0;
+    while(open.length&&iter++<20000){
+      let bi=0;for(let i=1;i<open.length;i++)if(open[i][0]<open[bi][0])bi=i;
+      const [,cur]=open.splice(bi,1)[0];
+      if(cur===b.id){found=true;break;}
+      if(closed.has(cur))continue;closed.add(cur);
+      const g=graph.get(cur),dc=dist.get(cur);
+      if(dc>straight*1.6)continue;
+      for(const [nb,w] of g.adj){const nd=dc+w;if(nd<(dist.get(nb)??Infinity)){dist.set(nb,nd);prev.set(nb,cur);const gn=graph.get(nb);open.push([nd+hav(gn.lat,gn.lon,b.lat,b.lon),nb]);}}
+    }
+    if(found&&dist.get(b.id)<=straight*1.45){
+      const ids=[];let c=b.id;while(c){ids.push(c);c=prev.get(c);}ids.reverse();
+      path=ids.map(id=>{const g=graph.get(id);return [g.lon,g.lat];});
+    }
+  }
+  const stored=path?(a.id<b.id?path:path.slice().reverse()):null;
+  routeCache.set(k,{v:graphVersion,path:stored});
+  return path;
+}
+
+function buildLegs(j){
+  const timed=[];j.stops.forEach((s,i)=>{if(s.arr||s.dep)timed.push(i);});
+  const legs=[];
+  for(let t=0;t<timed.length-1;t++){
+    const i0=timed[t],i1=timed[t+1];const s0=j.stops[i0],s1=j.stops[i1];
+    const tStart=s0.dep||s0.arr,tEnd=s1.arr||s1.dep;
+    let coords=[[s0.lon,s0.lat]];
+    for(let i=i0;i<i1;i++){const a=j.stops[i],b=j.stops[i+1];const p=route(a,b);if(p&&p.length>1)coords=coords.concat(p.slice(1));else coords.push([b.lon,b.lat]);}
+    const cum=[0];for(let i=1;i<coords.length;i++)cum.push(cum[i-1]+hav(coords[i-1][1],coords[i-1][0],coords[i][1],coords[i][0]));
+    legs.push({tStart,tEnd:Math.max(tEnd,tStart+1000),coords,cum,total:cum[cum.length-1],from:s0,to:s1});
+  }
+  j.legs=legs;j.legsVersion=graphVersion;
+}
+
+function positionAt(j,t){
+  if(j.legsVersion!==graphVersion)buildLegs(j);
+  if(t<j.t0-45000||t>j.t1+90000)return null;
+  const L=j.legs;if(!L.length)return null;
+  for(let i=0;i<L.length;i++){const g=L[i];
+    if(t<g.tStart)return {lon:g.coords[0][0],lat:g.coords[0][1],bearing:0,moving:false,leg:g,at:g.from};
+    if(t<=g.tEnd){const f=(t-g.tStart)/(g.tEnd-g.tStart);return along(g,f);}
+  }
+  const last=L[L.length-1];const c=last.coords[last.coords.length-1];
+  return {lon:c[0],lat:c[1],bearing:0,moving:false,leg:last,at:last.to,done:true};
+}
+function along(g,f){
+  const d=f*g.total;const c=g.coords;
+  if(g.total===0)return {lon:c[0][0],lat:c[0][1],bearing:0,moving:true,leg:g};
+  let i=1;while(i<g.cum.length-1&&g.cum[i]<d)i++;
+  const seg=g.cum[i]-g.cum[i-1];const u=seg>0?(d-g.cum[i-1])/seg:0;
+  const a=c[i-1],b=c[i];
+  return {lon:a[0]+(b[0]-a[0])*u,lat:a[1]+(b[1]-a[1])*u,bearing:bearing(a,b),moving:true,leg:g};
+}
+function hav(lat1,lon1,lat2,lon2){const R=6371000,toR=Math.PI/180;const dLat=(lat2-lat1)*toR,dLon=(lon2-lon1)*toR;const s=Math.sin(dLat/2)**2+Math.cos(lat1*toR)*Math.cos(lat2*toR)*Math.sin(dLon/2)**2;return 2*R*Math.asin(Math.sqrt(s));}
+function bearing(a,b){const toR=Math.PI/180;const y=Math.sin((b[0]-a[0])*toR)*Math.cos(b[1]*toR);const x=Math.cos(a[1]*toR)*Math.sin(b[1]*toR)-Math.sin(a[1]*toR)*Math.cos(b[1]*toR)*Math.cos((b[0]-a[0])*toR);return (Math.atan2(y,x)*180/Math.PI+360)%360;}
+function empty(){return {type:'FeatureCollection',features:[]};}
+
+// fetch rounds
+let feedOk=false,lastUpdate=null,inflight=false;
+async function round(deep){
+  if(inflight)return;inflight=true;
+  const tasks=[];
+  HUBS.forEach(([s,lim],i)=>{tasks.push([s,lim,24]);if(deep&&i<DEEP_HUBS)tasks.push([s,Math.round(lim*0.8),75]);});
+  let ok=0,fail=0,idx=0;
+  async function worker(){while(idx<tasks.length){const [s,lim,ago]=tasks[idx++];try{ingest(await fetchBoard(s,lim,ago));ok++;}catch(e){fail++;}
+    if(ok+fail===3||((ok+fail)%6===0))render(true);}}
+  await Promise.all([worker(),worker(),worker()]);
+  inflight=false;
+  if(ok){feedOk=true;lastUpdate=new Date();}
+  render(true);
+  updateStatus(fail&&!ok?'err':'live');
+}
+function updateStatus(kind){
+  const t=Date.now();let n=0;for(const j of journeys.values()){if(t>=j.t0-45000&&t<=j.t1+90000)n++;}
+  if(!feedOk){setStatus('err','Timetable feed unreachable');return;}
+  setStatus(kind||'live',n+' trains on the map · updated '+hmFmt.format(lastUpdate||new Date()));
+}
+function startFeed(){
+  round(true);
+  setInterval(()=>{setStatus('busy','Refreshing delays…');round(false);},5*60*1000);
+  setInterval(()=>{const t=Date.now();for(const [k,j] of journeys)if(t>j.t1+10*60000)journeys.delete(k);},60000);
+}
+
+// ---------- Render loop ----------
+let selectedKey=null,follow=false,lastPos=new Map();
+function render(force){
+  if(!map.getSource('trains'))return;
+  const t=Date.now();const feats=[];lastPos=new Map();
+  for(const j of journeys.values()){
+    const p=positionAt(j,t);if(!p||p.done&&t>j.t1+90000)continue;
+    lastPos.set(j.key,p);
+    feats.push({type:'Feature',geometry:{type:'Point',coordinates:[p.lon,p.lat]},properties:{key:j.key,color:j.color,selected:j.key===selectedKey}});
+  }
+  map.getSource('trains').setData({type:'FeatureCollection',features:feats});
+  if(selectedKey){const p=lastPos.get(selectedKey);if(p&&follow)map.setCenter([p.lon,p.lat]);if(force||(t%4000)<120)renderPanel();}
+}
+setInterval(()=>render(false),100);
+
+// ---------- Selection panel ----------
+function select(key){
+  if(key===selectedKey&&key)return;
+  selectedKey=key;setFollow(false);
+  const j=key&&journeys.get(key);
+  if(!j){panel.hidden=true;bottom.classList.remove('has-panel');map.getSource('route')&&map.getSource('route').setData(empty());map.getSource('routeStops')&&map.getSource('routeStops').setData(empty());render(true);return;}
+  if(j.legsVersion!==graphVersion)buildLegs(j);
+  const coords=j.legs.reduce((acc,g,i)=>acc.concat(i?g.coords.slice(1):g.coords),[]);
+  map.getSource('route').setData({type:'FeatureCollection',features:[{type:'Feature',geometry:{type:'LineString',coordinates:coords},properties:{color:j.color}}]});
+  map.getSource('routeStops').setData({type:'FeatureCollection',features:j.stops.filter(s=>s.arr||s.dep).map(s=>({type:'Feature',geometry:{type:'Point',coordinates:[s.lon,s.lat]},properties:{color:j.color}}))});
+  panel.hidden=false;bottom.classList.add('has-panel');
+  renderPanel(true);render(true);
+}
+function setFollow(v){follow=v;const b=panel.querySelector('[data-follow]');if(b)b.setAttribute('aria-pressed',String(v));}
+function fmt(ms){return ms?hmFmt.format(new Date(ms)):'';}
+function delayHtml(s){
+  if(s.delay==null&&!s.live)return '<span class="delay">scheduled</span>';
+  const d=s.delay||0;
+  return d>0?'<span class="delay late">+'+d+' min</span>':'<span class="delay ok">on time</span>';
+}
+function renderPanel(full){
+  const j=journeys.get(selectedKey);if(!j)return;
+  const t=Date.now();const p=positionAt(j,t);
+  let where='',ref=null;
+  if(!p){where='Not yet departed';ref=j.stops.find(s=>s.dep);}
+  else if(p.done){where='Arrived at '+p.at.name;ref=p.at;}
+  else if(!p.moving){where='At '+p.at.name+(p.at.dep?' · departs '+fmt(p.at.dep):'');ref=p.at;}
+  else{where=p.leg.from.name+' → '+p.leg.to.name+' · arrives '+fmt(p.leg.to.arr||p.leg.to.dep);ref=p.leg.to;}
+  const lightBadge=j.color==='#ffffff'||j.color==='#ffd60a';
+  const timed=j.stops.filter(s=>s.arr||s.dep);
+  const nextIdx=ref?timed.indexOf(ref):-1;
+  if(full||!panel.firstChild){
+    panel.innerHTML=
+      '<header><span class="badge'+(lightBadge?' light':'')+'" style="background:'+j.color+'">'+esc(j.label)+'</span>'+
+      '<div class="title"><b>→ '+esc(j.to)+'</b><small>'+esc(j.operator||'')+(j.name?' · train '+esc(j.name.replace(/^0+/,'')):'')+'</small></div>'+
+      '<button class="x" aria-label="Close">×</button></header>'+
+      '<div class="now"><div class="where"></div><div class="dl"></div></div>'+
+      '<div class="actions"><button data-follow aria-pressed="false">Follow</button><button data-fly>Fly to train</button></div>'+
+      '<ol class="stops"></ol>';
+    panel.querySelector('.x').onclick=()=>select(null);
+    panel.querySelector('[data-follow]').onclick=()=>{setFollow(!follow);spinning=false;if(follow){const q=lastPos.get(j.key);if(q)map.easeTo({center:[q.lon,q.lat],zoom:Math.max(map.getZoom(),11),duration:900});}};
+    panel.querySelector('[data-fly]').onclick=()=>{spinning=false;const q=lastPos.get(j.key);if(q)map.flyTo({center:[q.lon,q.lat],zoom:12.5,pitch:62,duration:reduced?0:2200,essential:true});};
+  }
+  panel.querySelector('.where').textContent=where;
+  panel.querySelector('.dl').innerHTML=ref?delayHtml(ref):'';
+  panel.querySelector('.stops').innerHTML=timed.map((s,i)=>{
+    const cls=i<nextIdx||(p&&p.done)?'past':(i===nextIdx?'next':'');
+    const tm=i===timed.length-1?fmt(s.arr||s.dep):fmt(s.dep||s.arr);
+    const d=s.delay>0?'+'+s.delay:'';
+    return '<li class="'+cls+'"><span class="t">'+tm+'</span><span>'+esc(s.name)+'</span><span class="d">'+d+'</span></li>';}).join('');
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+})();
+</script>
+</body>
+</html>
