@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/5.24.0/maplibre-gl.js" crossorigin="anonymous"></script>
 <style>
 /* Layout: the map is the page. Every control is a floating glass card pinned to a corner,
    so the imagery stays uninterrupted on a phone and a laptop alike. */
@@ -84,6 +84,11 @@ body{background:var(--bg);color:var(--fg);font:14px/1.4 var(--font-ui);overflow:
 /* bottom: fly-to chips, legend, attribution */
 .bottom{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:0 16px calc(12px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;pointer-events:none}
 .bottom>*{pointer-events:auto}
+.modes{display:inline-flex;gap:2px;padding:3px;width:max-content;border-radius:999px}
+.modes button{border:0;background:transparent;color:var(--fg);border-radius:999px;padding:7px 14px;font:600 12.5px var(--font-ui);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.modes button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.modes svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.modes button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:4px 0;margin:0 -16px;padding-left:16px;padding-right:16px}
 .chips::-webkit-scrollbar{display:none}
 .chips button{flex:none;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--chip-fg);border-radius:999px;padding:7px 12px;font:500 12.5px var(--font-ui);cursor:pointer;box-shadow:var(--shadow)}
@@ -130,7 +135,7 @@ body{background:var(--bg);color:var(--fg);font:14px/1.4 var(--font-ui);overflow:
   .clock{font-size:19px}
   .panel{right:auto;left:16px;top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:calc(100vw - 32px);max-height:46vh}
   .legend{display:none}
-  .bottom.has-panel .chips,.bottom.has-panel .attr{display:none}
+  .bottom.has-panel .chips,.bottom.has-panel .attr,.bottom.has-panel .modes{display:none}
 }
 @media (prefers-reduced-motion: reduce){ .status.busy .dot{animation:none} }
 </style>
@@ -154,6 +159,10 @@ body{background:var(--bg);color:var(--fg);font:14px/1.4 var(--font-ui);overflow:
 <aside class="panel card" id="panel" hidden aria-live="polite"></aside>
 
 <div class="bottom" id="bottom">
+  <div class="modes card" id="modes" role="group" aria-label="Map look">
+    <button data-mode="aerial" aria-pressed="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Aerial</button>
+    <button data-mode="diorama" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M2 20l7-12 4 7 3-4 6 9z"/><path d="M9 8l1.5 2.5L12 8"/></svg>Diorama</button>
+  </div>
   <div class="chips" id="chips" aria-label="Fly to">
     <button data-v="8.25,46.82,7.1,52,-8">Switzerland</button>
     <button data-v="8.62,46.63,9.8,66,18">Gotthard</button>
@@ -225,6 +234,7 @@ try{
   return;
 }
 
+let currentMode='aerial';
 function voidColor(){return getComputedStyle(document.documentElement).getPropertyValue('--void').trim()||'#0c1420';}
 
 map.on('load',()=>{
@@ -243,7 +253,45 @@ map.on('load',()=>{
   // Zoomed out, the aerial mosaic is soft; the national map is crisp at any scale. Crossfade between them.
   map.addSource('topo',{type:'raster',tiles:['https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg'],tileSize:256,minzoom:0,maxzoom:18,attribution:'© swisstopo'});
   map.addLayer({id:'topo',type:'raster',source:'topo',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],8.6,1,10.4,0],'raster-fade-duration':150}},'water_line');
-  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(map.getLayer('background'))map.setPaintProperty('background','background-color',voidColor());});
+
+  // Diorama: flat elevation tints (meadow green up to snow) with one soft light source, over exaggerated terrain.
+  const BASE='base_v1.0.0';
+  try{
+    map.addLayer({id:'dio-relief',type:'color-relief',source:'dem',layout:{visibility:'none'},paint:{'color-relief-color':['interpolate',['linear'],['elevation'],
+      180,'#4fae55',550,'#74c35f',900,'#9fcf6a',1300,'#cbd27a',1700,'#d9c48a',2100,'#c2b39b',2500,'#d6d3cc',2900,'#f1f1ee',3400,'#ffffff']}},'water_line');
+  }catch(e){}
+  map.addLayer({id:'dio-shade',type:'hillshade',source:'dem',layout:{visibility:'none','hillshade-illumination-direction':325,'hillshade-illumination-anchor':'map'},
+    paint:{'hillshade-exaggeration':.62,'hillshade-shadow-color':'#2f3f6a','hillshade-highlight-color':'#fff9e6','hillshade-accent-color':'#5b6f99'}},'water_line');
+  if(map.getSource(BASE)){
+    map.addLayer({id:'dio-forest',type:'fill',source:BASE,'source-layer':'landcover',layout:{visibility:'none'},
+      filter:['any',['in',['get','class'],['literal',['wood','forest','tree','trees']]],['in',['get','subclass'],['literal',['wood','forest','forest_open','trees']]]],
+      paint:{'fill-color':'#2f8a4a','fill-opacity':['interpolate',['linear'],['zoom'],7,.35,12,.5],'fill-antialias':false}},'water_line');
+    map.addLayer({id:'dio-glacier',type:'fill',source:BASE,'source-layer':'landcover',layout:{visibility:'none'},
+      filter:['any',['in',['get','class'],['literal',['ice','glacier','snow']]],['in',['get','subclass'],['literal',['glacier','ice','snow','firn']]]],
+      paint:{'fill-color':'#f4fbff','fill-opacity':.85,'fill-antialias':false}},'water_line');
+    map.addLayer({id:'dio-water',type:'fill',source:BASE,'source-layer':'water',layout:{visibility:'none'},
+      paint:{'fill-color':'#3fa7e6','fill-opacity':.95,'fill-antialias':false}},'water_line');
+  }
+
+  // Look switch
+  const SKY_AERIAL={'sky-color':'#8fbef0','horizon-color':'#dbe8f5','fog-color':'#eef3f8','sky-horizon-blend':.5,'horizon-fog-blend':.35,'fog-ground-blend':.2,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,.9,9,.6,12,0]};
+  const SKY_DIO={'sky-color':'#6fb4ff','horizon-color':'#cfe6ff','fog-color':'#e9f3ff','sky-horizon-blend':.7,'horizon-fog-blend':.2,'fog-ground-blend':.08,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,.7,9,.35,12,0]};
+  const DIO_LAYERS=['dio-relief','dio-shade','dio-forest','dio-glacier','dio-water'];
+  function setMode(m){
+    currentMode=m;
+    const dio=m==='diorama';
+    ['swissimage','topo'].forEach(id=>map.getLayer(id)&&map.setLayoutProperty(id,'visibility',dio?'none':'visible'));
+    DIO_LAYERS.forEach(id=>map.getLayer(id)&&map.setLayoutProperty(id,'visibility',dio?'visible':'none'));
+    map.setTerrain({source:'dem',exaggeration:dio?2.1:1.25});
+    try{map.setSky(dio?SKY_DIO:SKY_AERIAL);}catch(e){}
+    if(map.getLayer('background'))map.setPaintProperty('background','background-color',dio?'#8fc8f0':voidColor());
+    document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));
+    try{localStorage.setItem('srl-mode',m);}catch(e){}
+  }
+  let savedMode='aerial';try{savedMode=localStorage.getItem('srl-mode')||'aerial';}catch(e){}
+  setMode(savedMode);
+  document.getElementById('modes').addEventListener('click',e=>{const b=e.target.closest('button[data-mode]');if(b)setMode(b.dataset.mode);});
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(map.getLayer('background')&&currentMode!=='diorama')map.setPaintProperty('background','background-color',voidColor());});
 
   map.addSource('route',{type:'geojson',data:empty()});
   map.addSource('routeStops',{type:'geojson',data:empty()});
