@@ -182,7 +182,7 @@ body{background:var(--bg);color:var(--fg);font:14px/1.4 var(--font-ui);overflow:
     <span><i style="background:#38b6ff"></i>S-Bahn</span>
     <span><i style="background:#ffffff"></i>Glacier · Bernina · GoldenPass</span>
   </div>
-  <div class="attr">Imagery &amp; map © <a href="https://www.swisstopo.admin.ch" target="_blank" rel="noopener">swisstopo</a> · Timetable &amp; delays via <a href="https://transport.opendata.ch" target="_blank" rel="noopener">transport.opendata.ch</a> · Terrain: Mapzen / AWS Open Data · Positions are interpolated between scheduled stops.</div>
+  <div class="attr">Imagery &amp; map © <a href="https://www.swisstopo.admin.ch" target="_blank" rel="noopener">swisstopo</a> · Timetable &amp; delays via <a href="https://transport.opendata.ch" target="_blank" rel="noopener">transport.opendata.ch</a> · Tracks © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors · Terrain: Mapzen / AWS Open Data · Positions are interpolated between scheduled stops.</div>
 </div>
 
 <div class="veil" id="veil">Loading swisstopo imagery and terrain…</div>
@@ -400,13 +400,20 @@ function ingest(board){
   return n;
 }
 function node(s){let g=graph.get(s.id);if(!g){g={lat:s.lat,lon:s.lon,adj:new Map()};graph.set(s.id,g);}return g;}
-function addEdge(a,b,d){const ga=node(a),gb=node(b);if(!ga.adj.has(b.id)){ga.adj.set(b.id,d);gb.adj.set(a.id,d);graphVersion++;}}
+function addEdge(a,b,d){const ga=node(a),gb=node(b);if(!ga.adj.has(b.id)){ga.adj.set(b.id,d);gb.adj.set(a.id,d);if(!rails.ready)graphVersion++;}}
 
 // A* over the station graph: express trains follow the rails that stopping trains revealed
 function route(a,b){
   const k=a.id<b.id?a.id+'|'+b.id:b.id+'|'+a.id;
   const cached=routeCache.get(k);
   if(cached&&cached.v===graphVersion)return cached.path?(a.id<b.id?cached.path:cached.path.slice().reverse()):null;
+  let path=railRoute(a,b);
+  if(!path)path=stationRoute(a,b);
+  const stored=path?(a.id<b.id?path:path.slice().reverse()):null;
+  routeCache.set(k,{v:graphVersion,path:stored});
+  return path;
+}
+function stationRoute(a,b){
   const straight=hav(a.lat,a.lon,b.lat,b.lon);
   let path=null;
   if(straight>2500&&graph.has(a.id)&&graph.has(b.id)){
@@ -426,8 +433,60 @@ function route(a,b){
       path=ids.map(id=>{const g=graph.get(id);return [g.lon,g.lat];});
     }
   }
-  const stored=path?(a.id<b.id?path:path.slice().reverse()):null;
-  routeCache.set(k,{v:graphVersion,path:stored});
+  return path;
+}
+
+// ---------- Real rails (rails.json, built from OpenStreetMap by the data job) ----------
+// Nodes are track vertices; stations snap to the nearest one; A* with a binary heap finds the track path.
+const rails={ready:false,n:0,lon:null,lat:null,adj:null,grid:new Map(),snap:new Map()};
+function railLoad(){
+  fetch('rails.json').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(d=>{
+    const S=d.scale||100000;const key=new Map();const lon=[],lat=[],adj=[];
+    function nodeAt(x,y){const k=x*4000000+y;let i=key.get(k);if(i===undefined){i=lon.length;key.set(k,i);lon.push(x/S);lat.push(y/S);adj.push([]);}return i;}
+    for(const line of d.lines){
+      let x=line[0],y=line[1],prev=nodeAt(x,y);
+      for(let i=2;i<line.length;i+=2){x+=line[i];y+=line[i+1];const cur=nodeAt(x,y);
+        if(cur!==prev){const w=hav(lat[prev],lon[prev],lat[cur],lon[cur]);adj[prev].push(cur,w);adj[cur].push(prev,w);}prev=cur;}
+    }
+    rails.lon=Float64Array.from(lon);rails.lat=Float64Array.from(lat);rails.adj=adj;rails.n=lon.length;
+    rails.dist=new Float64Array(rails.n);rails.prev=new Int32Array(rails.n);rails.stamp=new Int32Array(rails.n);rails.closed=new Int32Array(rails.n);rails.run=0;
+    for(let i=0;i<rails.n;i++){const c=cellKey(rails.lon[i],rails.lat[i]);let arr=rails.grid.get(c);if(!arr){arr=[];rails.grid.set(c,arr);}arr.push(i);}
+    rails.ready=true;routeCache.clear();graphVersion++;
+    for(const j of journeys.values())j.legsVersion=-1;
+  }).catch(()=>{/* no rails file: station graph and straight lines remain */});
+}
+function cellKey(lon,lat){return Math.floor(lon*100)*100000+Math.floor(lat*100);}
+function railSnap(s){
+  if(rails.snap.has(s.id))return rails.snap.get(s.id);
+  const cx=Math.floor(s.lon*100),cy=Math.floor(s.lat*100);let best=-1,bd=Infinity;
+  for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const arr=rails.grid.get((cx+dx)*100000+(cy+dy));if(!arr)continue;
+    for(const i of arr){const d=hav(s.lat,s.lon,rails.lat[i],rails.lon[i]);if(d<bd){bd=d;best=i;}}}
+  const r=bd<=1500?best:-1;rails.snap.set(s.id,r);return r;
+}
+// binary heap keyed on f
+function heapPush(h,f,i){h.push(f,i);let c=h.length/2-1;while(c>0){const p=(c-1)>>1;if(h[p*2]<=h[c*2])break;[h[p*2],h[c*2]]=[h[c*2],h[p*2]];[h[p*2+1],h[c*2+1]]=[h[c*2+1],h[p*2+1]];c=p;}}
+function heapPop(h){const f=h[0],i=h[1];const li=h.pop(),lf=h.pop();const n=h.length/2;if(n>0){h[0]=lf;h[1]=li;let c=0;for(;;){let l=2*c+1,r=l+1,m=c;if(l<n&&h[l*2]<h[m*2])m=l;if(r<n&&h[r*2]<h[m*2])m=r;if(m===c)break;[h[m*2],h[c*2]]=[h[c*2],h[m*2]];[h[m*2+1],h[c*2+1]]=[h[c*2+1],h[m*2+1]];c=m;}}return [f,i];}
+function railRoute(a,b){
+  if(!rails.ready)return null;
+  const s=railSnap(a),t=railSnap(b);if(s<0||t<0)return null;
+  if(s===t)return [[rails.lon[s],rails.lat[s]]];
+  const straight=hav(a.lat,a.lon,b.lat,b.lon);const limit=Math.max(straight*2.6,8000);
+  const run=++rails.run,dist=rails.dist,prev=rails.prev,stamp=rails.stamp,closed=rails.closed;
+  const h=[];heapPush(h,0,s);stamp[s]=run;dist[s]=0;prev[s]=-1;
+  const tl=rails.lat[t],tn=rails.lon[t];let found=false,iter=0;
+  while(h.length&&iter++<400000){
+    const [,cur]=heapPop(h);
+    if(cur===t){found=true;break;}
+    if(closed[cur]===run)continue;closed[cur]=run;
+    const dc=dist[cur];if(dc>limit)continue;
+    const ad=rails.adj[cur];
+    for(let i=0;i<ad.length;i+=2){const nb=ad[i],nd=dc+ad[i+1];
+      if(stamp[nb]!==run||nd<dist[nb]){stamp[nb]=run;dist[nb]=nd;prev[nb]=cur;heapPush(h,nd+hav(rails.lat[nb],rails.lon[nb],tl,tn),nb);}}
+  }
+  if(!found)return null;
+  const path=[];let c=t;while(c>=0){path.push([rails.lon[c],rails.lat[c]]);c=prev[c];}path.reverse();
+  // the station itself sits a little off the track: start and end at the real station points
+  path.unshift([a.lon,a.lat]);path.push([b.lon,b.lat]);
   return path;
 }
 
@@ -445,8 +504,12 @@ function buildLegs(j){
   j.legs=legs;j.legsVersion=graphVersion;
 }
 
+// Routing is spread over frames: each render tick gets a small time budget for rebuilding legs,
+// and a journey keeps its previous geometry until its turn comes.
+let legBudgetUntil=0;
 function positionAt(j,t){
-  if(j.legsVersion!==graphVersion)buildLegs(j);
+  if(j.legsVersion!==graphVersion&&(!j.legs||performance.now()<legBudgetUntil))buildLegs(j);
+  if(!j.legs)return null;
   if(t<j.t0-45000||t>j.t1+90000)return null;
   const L=j.legs;if(!L.length)return null;
   for(let i=0;i<L.length;i++){const g=L[i];
@@ -489,6 +552,7 @@ function updateStatus(kind){
   setStatus(kind||'live',n+' trains on the map · updated '+hmFmt.format(lastUpdate||new Date()));
 }
 function startFeed(){
+  railLoad();
   round(true);
   setInterval(()=>{setStatus('busy','Refreshing delays…');round(false);},5*60*1000);
   setInterval(()=>{const t=Date.now();for(const [k,j] of journeys)if(t>j.t1+10*60000)journeys.delete(k);},60000);
@@ -499,6 +563,7 @@ let selectedKey=null,follow=false,lastPos=new Map();
 function render(force){
   if(!map.getSource('trains'))return;
   const t=Date.now();const feats=[];lastPos=new Map();
+  legBudgetUntil=performance.now()+(force?60:18);
   for(const j of journeys.values()){
     const p=positionAt(j,t);if(!p||p.done&&t>j.t1+90000)continue;
     lastPos.set(j.key,p);

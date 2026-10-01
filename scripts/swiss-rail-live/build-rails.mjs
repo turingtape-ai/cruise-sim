@@ -7,7 +7,7 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 
 const BBOX = '45.70,5.80,47.95,10.60'; // south,west,north,east — Switzerland plus the cross-border stretches
-const QUERY = `[out:json][timeout:600][maxsize:1073741824];
+const QUERY = `[out:json][timeout:400];
 (
   way["railway"~"^(rail|narrow_gauge|light_rail|rack)$"]["service"!~"."](${BBOX});
 );
