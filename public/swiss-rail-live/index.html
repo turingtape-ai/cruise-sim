@@ -230,8 +230,19 @@ function voidColor(){return getComputedStyle(document.documentElement).getProper
 map.on('load',()=>{
   map.addSource('dem',{type:'raster-dem',tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],encoding:'terrarium',tileSize:256,maxzoom:15,attribution:'Terrain: Mapzen'});
   map.setTerrain({source:'dem',exaggeration:1.25});
-  try{map.setSky({'sky-color':'#8fbef0','horizon-color':'#dbe8f5','fog-color':'#eef3f8','sky-horizon-blend':.55,'horizon-fog-blend':.6,'fog-ground-blend':.55,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,10,1,12,0]});}catch(e){}
+  try{map.setSky({'sky-color':'#8fbef0','horizon-color':'#dbe8f5','fog-color':'#eef3f8','sky-horizon-blend':.5,'horizon-fog-blend':.35,'fog-ground-blend':.2,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,.9,9,.6,12,0]});}catch(e){}
   if(map.getLayer('background'))map.setPaintProperty('background','background-color',voidColor());
+
+  // Sharper imagery: a 128px tile size makes MapLibre fetch tiles one zoom level finer.
+  if(map.getSource('swissimage_wmts')){
+    const img=map.getStyle().layers.find(l=>l.id==='swissimage');const before=map.getStyle().layers[map.getStyle().layers.indexOf(img)+1];
+    map.removeLayer('swissimage');map.removeSource('swissimage_wmts');
+    map.addSource('swissimage_wmts',{type:'raster',tiles:['https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/3857/{z}/{x}/{y}.jpeg'],tileSize:128,minzoom:0,maxzoom:19,attribution:'© swisstopo'});
+    map.addLayer({id:'swissimage',type:'raster',source:'swissimage_wmts',paint:{'raster-fade-duration':150}},before&&before.id);
+  }
+  // Zoomed out, the aerial mosaic is soft; the national map is crisp at any scale. Crossfade between them.
+  map.addSource('topo',{type:'raster',tiles:['https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-farbe/default/current/3857/{z}/{x}/{y}.jpeg'],tileSize:256,minzoom:0,maxzoom:18,attribution:'© swisstopo'});
+  map.addLayer({id:'topo',type:'raster',source:'topo',paint:{'raster-opacity':['interpolate',['linear'],['zoom'],8.6,1,10.4,0],'raster-fade-duration':150}},'water_line');
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(map.getLayer('background'))map.setPaintProperty('background','background-color',voidColor());});
 
   map.addSource('route',{type:'geojson',data:empty()});
